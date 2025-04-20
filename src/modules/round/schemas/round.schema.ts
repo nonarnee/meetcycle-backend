@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
-import { User } from '../../user/schemas/user.schema';
 import { Meeting } from '../../meeting/schemas/meeting.schema';
 import { Cycle } from '../../cycle/schemas/cycle.schema';
+import { Participant } from '../../participant/schemas/participant.schema';
 
 export type RoundDocument = Round & Document;
 
@@ -14,11 +14,19 @@ export class Round {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Cycle', required: true })
   cycle: Cycle;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
-  maleParticipant: User;
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'Participant',
+    required: true,
+  })
+  maleParticipant: Participant;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
-  femaleParticipant: User;
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'Participant',
+    required: true,
+  })
+  femaleParticipant: Participant;
 
   @Prop({ default: 'pending', enum: ['pending', 'ongoing', 'completed'] })
   status: string;

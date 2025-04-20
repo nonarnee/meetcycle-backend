@@ -1,0 +1,45 @@
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  IsBoolean,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class CreateRoundDto {
+  @IsNotEmpty()
+  @IsString()
+  meeting: string; // Meeting ID (ObjectId)
+
+  @IsNotEmpty()
+  @IsString()
+  cycle: string; // Cycle ID (ObjectId)
+
+  @IsNotEmpty()
+  @IsString()
+  maleParticipant: string; // Participant ID (ObjectId)
+
+  @IsNotEmpty()
+  @IsString()
+  femaleParticipant: string; // Participant ID (ObjectId)
+
+  @IsOptional()
+  @IsEnum(['pending', 'ongoing', 'completed'])
+  status?: string = 'pending';
+
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  maleParticipantLiked?: boolean | null = null;
+
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  femaleParticipantLiked?: boolean | null = null;
+
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  isMatched?: boolean = false;
+}

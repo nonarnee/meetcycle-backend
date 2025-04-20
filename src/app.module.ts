@@ -7,6 +7,7 @@ import { getMongooseConfig } from './config/mongoose.config';
 import { UserModule } from './modules/user/user.module';
 import { MeetingModule } from './modules/meeting/meeting.module';
 import { RoundModule } from './modules/round/round.module';
+import { ParticipantModule } from './modules/participant/participant.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { RoundModule } from './modules/round/round.module';
     UserModule,
     MeetingModule,
     RoundModule,
+    ParticipantModule,
   ],
   controllers: [AppController],
   providers: [AppService],
