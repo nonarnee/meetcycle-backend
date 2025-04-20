@@ -31,16 +31,16 @@ export class Round {
   @Prop({ default: 'pending', enum: ['pending', 'ongoing', 'completed'] })
   status: string;
 
-  @Prop({ default: null })
+  @Prop({ type: Boolean, default: null })
   maleLiked: boolean | null;
 
-  @Prop({ default: null })
+  @Prop({ type: Boolean, default: null })
   femaleLiked: boolean | null;
 
   @Prop({ default: false })
   isMatched: boolean;
 
-  @Prop({ default: null })
+  @Prop({ type: Date, default: null })
   completedAt: Date | null;
 }
 
