@@ -5,6 +5,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { getMongooseConfig } from './config/mongoose.config';
 import { UserModule } from './modules/user/user.module';
+import { MeetingModule } from './modules/meeting/meeting.module';
+import { RoundModule } from './modules/round/round.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { UserModule } from './modules/user/user.module';
       useFactory: getMongooseConfig,
     }),
     UserModule,
+    MeetingModule,
+    RoundModule,
   ],
   controllers: [AppController],
   providers: [AppService],
