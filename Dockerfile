@@ -19,6 +19,7 @@ COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 3000
 
-RUN --mount=type=secret,id=_env,dst=/etc/secrets/.env cat /etc/secrets/.env
+# Secret 파일 마운트
+#RUN --mount=type=secret,id=_FILE_NAME,dst=/etc/secrets/FILE_NAME cat /etc/secrets/FILE_NAME
 
 CMD ["node", "dist/main"] 
