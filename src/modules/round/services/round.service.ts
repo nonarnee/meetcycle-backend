@@ -62,19 +62,22 @@ export class RoundService {
 
   async updateLiked(
     id: string,
-    participantNumber: 1 | 2,
+    gender: 'male' | 'female',
     liked: boolean,
   ): Promise<Round | null> {
-    const field =
-      participantNumber === 1 ? 'participant1Liked' : 'participant2Liked';
+    const field = gender === 'male' ? 'maleLiked' : 'femaleLiked';
     const round = await this.roundModel
       .findByIdAndUpdate(id, { [field]: liked }, { new: true })
       .exec();
 
-    // 양쪽 모두 liked가 true일 경우 매치 성공
-    if (round && round.participant1Liked && round.participant2Liked) {
-      round.isMatched = true;
-      await round.save();
+    if (round) {
+      round[field] = liked;
+
+      // 양쪽 모두 liked가 true일 경우 매치 성공
+      if (round.maleLiked && round.femaleLiked) {
+        round.isMatched = true;
+        await round.save();
+      }
     }
 
     return round;

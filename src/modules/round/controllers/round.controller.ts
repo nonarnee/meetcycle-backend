@@ -55,9 +55,9 @@ export class RoundController {
   @Put(':id/like')
   updateLiked(
     @Param('id') id: string,
-    @Body('participantNumber') participantNumber: 1 | 2,
+    @Body('gender') gender: 'male' | 'female',
     @Body('liked') liked: boolean,
   ): Promise<Round | null> {
-    return this.roundService.updateLiked(id, participantNumber, liked);
+    return this.roundService.updateLiked(id, gender, liked);
   }
 }

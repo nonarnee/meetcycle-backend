@@ -32,10 +32,10 @@ export class Round {
   status: string;
 
   @Prop({ default: null })
-  maleParticipantLiked: boolean | null;
+  maleLiked: boolean | null;
 
   @Prop({ default: null })
-  femaleParticipantLiked: boolean | null;
+  femaleLiked: boolean | null;
 
   @Prop({ default: false })
   isMatched: boolean;

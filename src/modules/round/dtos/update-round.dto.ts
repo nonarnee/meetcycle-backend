@@ -9,12 +9,12 @@ export class UpdateRoundDto {
   @IsOptional()
   @IsBoolean()
   @Type(() => Boolean)
-  maleParticipantLiked?: boolean | null;
+  maleLiked?: boolean | null;
 
   @IsOptional()
   @IsBoolean()
   @Type(() => Boolean)
-  femaleParticipantLiked?: boolean | null;
+  femaleLiked?: boolean | null;
 
   @IsOptional()
   @IsBoolean()

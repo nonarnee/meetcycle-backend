@@ -1,13 +1,14 @@
-import { IsBoolean, IsEnum, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsBoolean, IsOptional } from 'class-validator';
 
 export class UpdateLikeDto {
-  @IsNotEmpty()
-  @IsEnum(['male', 'female'])
-  participantType: string; // 'male' 또는 'female'
-
-  @IsNotEmpty()
+  @IsOptional()
   @IsBoolean()
   @Type(() => Boolean)
-  liked: boolean;
+  maleLiked: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  femaleLiked: boolean;
 }

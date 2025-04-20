@@ -70,9 +70,7 @@ export class CycleService {
 
     // 모든 라운드에서 양쪽 참가자가 liked 여부를 선택했는지 확인
     const allCompleted = rounds.every(
-      (round) =>
-        round.maleParticipantLiked !== null &&
-        round.femaleParticipantLiked !== null,
+      (round) => round.maleLiked !== null && round.femaleLiked !== null,
     );
 
     if (allCompleted) {

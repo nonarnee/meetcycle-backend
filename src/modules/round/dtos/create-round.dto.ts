@@ -31,12 +31,12 @@ export class CreateRoundDto {
   @IsOptional()
   @IsBoolean()
   @Type(() => Boolean)
-  maleParticipantLiked?: boolean | null = null;
+  maleLiked?: boolean | null = null;
 
   @IsOptional()
   @IsBoolean()
   @Type(() => Boolean)
-  femaleParticipantLiked?: boolean | null = null;
+  femaleLiked?: boolean | null = null;
 
   @IsOptional()
   @IsBoolean()
