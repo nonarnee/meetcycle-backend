@@ -3,12 +3,12 @@ import { Document } from 'mongoose';
 
 export type ParticipantDocument = Participant & Document;
 
-@Schema()
-export class Participant extends Document {
+@Schema({ timestamps: true })
+export class Participant {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, enum: ['male', 'female'] })
   gender: string;
 
   @Prop({ required: true })
@@ -19,6 +19,9 @@ export class Participant extends Document {
 
   @Prop({ required: true })
   comment: string;
+
+  @Prop()
+  userId: string;
 }
 
 export const ParticipantSchema = SchemaFactory.createForClass(Participant);

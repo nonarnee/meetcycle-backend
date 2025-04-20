@@ -8,6 +8,7 @@ import { UserModule } from './modules/user/user.module';
 import { MeetingModule } from './modules/meeting/meeting.module';
 import { RoundModule } from './modules/round/round.module';
 import { ParticipantModule } from './modules/participant/participant.module';
+import { CycleModule } from './modules/cycle/cycle.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ParticipantModule } from './modules/participant/participant.module';
     MeetingModule,
     RoundModule,
     ParticipantModule,
+    CycleModule,
   ],
   controllers: [AppController],
   providers: [AppService],

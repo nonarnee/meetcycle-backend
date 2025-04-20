@@ -1,21 +1,32 @@
 import {
   Controller,
   Get,
-  Param,
   Post,
   Body,
-  Put,
+  Param,
   Delete,
+  Put,
+  Query,
 } from '@nestjs/common';
 import { CycleService } from '../services/cycle.service';
+import { CreateCycleDto } from '../dtos/create-cycle.dto';
+import { UpdateCycleDto } from '../dtos/update-cycle.dto';
 import { Cycle } from '../schemas/cycle.schema';
 
 @Controller('cycles')
 export class CycleController {
   constructor(private readonly cycleService: CycleService) {}
 
+  @Post()
+  create(@Body() createCycleDto: CreateCycleDto): Promise<Cycle> {
+    return this.cycleService.create(createCycleDto);
+  }
+
   @Get()
-  findAll(): Promise<Cycle[]> {
+  findAll(@Query('meetingId') meetingId?: string): Promise<Cycle[]> {
+    if (meetingId) {
+      return this.cycleService.findByMeeting(meetingId);
+    }
     return this.cycleService.findAll();
   }
 
@@ -24,18 +35,32 @@ export class CycleController {
     return this.cycleService.findOne(id);
   }
 
-  @Post()
-  create(@Body() cycle: Cycle): Promise<Cycle> {
-    return this.cycleService.create(cycle);
-  }
-
   @Put(':id')
-  update(@Param('id') id: string, @Body() cycle: Cycle): Promise<Cycle | null> {
-    return this.cycleService.update(id, cycle);
+  update(
+    @Param('id') id: string,
+    @Body() updateCycleDto: UpdateCycleDto,
+  ): Promise<Cycle | null> {
+    return this.cycleService.update(id, updateCycleDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string): Promise<Cycle | null> {
     return this.cycleService.remove(id);
+  }
+
+  @Put(':id/status')
+  updateStatus(
+    @Param('id') id: string,
+    @Body('status') status: string,
+  ): Promise<Cycle | null> {
+    return this.cycleService.updateStatus(id, status);
+  }
+
+  @Put(':id/complete')
+  setAllRoundsCompleted(
+    @Param('id') id: string,
+    @Body('completed') completed: boolean,
+  ): Promise<Cycle | null> {
+    return this.cycleService.setAllRoundsCompleted(id, completed);
   }
 }

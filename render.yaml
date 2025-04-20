@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: meetcycle-backend
+    env: docker
+    repo: https://github.com/nonarnee/meetcycle-backend
+    branch: main
+    dockerfilePath: ./Dockerfile
+    numInstances: 1
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: MONGODB_URI
+        sync: false
+      - key: FRONTEND_URL
+        sync: false 

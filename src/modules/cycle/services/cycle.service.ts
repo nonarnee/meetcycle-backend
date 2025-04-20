@@ -8,6 +8,8 @@ import {
   Meeting,
   MeetingDocument,
 } from 'src/modules/meeting/schemas/meeting.schema';
+import { CreateCycleDto } from '../dtos/create-cycle.dto';
+import { UpdateCycleDto } from '../dtos/update-cycle.dto';
 
 @Injectable()
 export class CycleService {
@@ -18,24 +20,48 @@ export class CycleService {
   ) {}
 
   async findAll(): Promise<Cycle[]> {
-    return this.cycleModel.find().exec();
+    return this.cycleModel.find().populate('meeting').exec();
   }
 
   async findOne(id: string): Promise<Cycle | null> {
-    return this.cycleModel.findById(id).exec();
+    return this.cycleModel.findById(id).populate('meeting').exec();
   }
 
-  async create(cycle: Cycle): Promise<Cycle> {
-    const createdCycle = new this.cycleModel(cycle);
-    return createdCycle.save();
+  async findByMeeting(meetingId: string): Promise<Cycle[]> {
+    return this.cycleModel.find({ meeting: meetingId }).exec();
   }
 
-  async update(id: string, cycle: Cycle): Promise<Cycle | null> {
-    return this.cycleModel.findByIdAndUpdate(id, cycle, { new: true }).exec();
+  async create(createCycleDto: CreateCycleDto): Promise<Cycle> {
+    const newCycle = new this.cycleModel(createCycleDto);
+    return newCycle.save();
+  }
+
+  async update(
+    id: string,
+    updateCycleDto: UpdateCycleDto,
+  ): Promise<Cycle | null> {
+    return this.cycleModel
+      .findByIdAndUpdate(id, updateCycleDto, { new: true })
+      .exec();
   }
 
   async remove(id: string): Promise<Cycle | null> {
     return this.cycleModel.findByIdAndDelete(id).exec();
+  }
+
+  async updateStatus(id: string, status: string): Promise<Cycle | null> {
+    return this.cycleModel
+      .findByIdAndUpdate(id, { status }, { new: true })
+      .exec();
+  }
+
+  async setAllRoundsCompleted(
+    id: string,
+    completed: boolean,
+  ): Promise<Cycle | null> {
+    return this.cycleModel
+      .findByIdAndUpdate(id, { allRoundsCompleted: completed }, { new: true })
+      .exec();
   }
 
   // 사이클의 모든 라운드가 완료되었는지 확인하는 메서드
