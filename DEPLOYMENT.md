@@ -29,7 +29,7 @@
 #### 3.3 환경 변수 설정
 1. 서비스 대시보드에서 "Environment" 탭 선택
 2. 다음 환경 변수 추가:
-   - `MONGODB_URI`: MongoDB 연결 URI
+   - `MONGODB_URI`: MongoDB 연결 URI (Secret)
    - `PORT`: 3000
    - `FRONTEND_URL`: 프론트엔드 URL
 
@@ -86,3 +86,18 @@ GitHub Actions를 통해 자동화된 CI/CD 파이프라인이 구성되어 있�
 - **배포 실패**: Render 로그에서 배포 단계 오류 확인
 - **CI/CD 파이프라인 오류**: GitHub Actions 워크플로우 로그 확인
 - **컨테이너 실행 오류**: Render 로그에서 애플리케이션 시작 오류 확인
+
+## 보안 고려사항
+
+### 민감한 환경 변수 관리
+
+1. **Secret으로 설정**: MongoDB URI와 API 키와 같은 민감한 정보는 항상 Render 대시보드에서 Secret으로 설정하세요.
+
+2. **환경 변수 노출 방지**:
+   - Render 대시보드의 "Environment" 탭에서 환경 변수를 추가할 때 "Secret" 옵션을 선택하세요.
+   - render.yaml 파일에 민감한 환경 변수의 실제 값을 포함하지 마세요.
+   - 로그에 민감한 정보가 출력되지 않도록 애플리케이션 코드를 검토하세요.
+
+3. **접근 제어**:
+   - Render 대시보드 접근 권한을 제한하세요.
+   - 팀원들에게 필요한 최소한의 권한만 부여하세요.
