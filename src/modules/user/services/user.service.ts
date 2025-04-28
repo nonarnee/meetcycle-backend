@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from '../schemas/user.schema';
 import { UserRole } from '../types/user-role.type';
 import { LeanSchema } from 'src/common/types/lean.type';
+import { saveAndLean } from 'src/common/helper/lean.helper';
 
 @Injectable()
 export class UserService {
@@ -38,12 +39,15 @@ export class UserService {
     const hashed = await bcrypt.hash(user.password, salt);
 
     // 유저 생성
-    const newUser = new this.userModel({
-      ...user,
-      password: hashed,
-      role: UserRole.PARTICIPANT,
-    });
-    return (await newUser.save()).toObject();
+    const createdUser = await saveAndLean(
+      new this.userModel({
+        ...user,
+        password: hashed,
+        role: UserRole.PARTICIPANT,
+      }),
+    );
+
+    return createdUser;
   }
 
   async update(id: string, user: User): Promise<LeanSchema<User> | null> {

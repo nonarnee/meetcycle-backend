@@ -12,6 +12,7 @@ import { MeetingService } from '../services/meeting.service';
 import { Meeting } from '../schemas/meeting.schema';
 import { CreateMeetingDto } from '../dtos/request/create-meeting.request';
 import { CreateMeetingResponse } from '../dtos/response/create-meeting.response';
+import { MeetingResponse } from '../dtos/response/meeting.response';
 
 @Controller('meetings')
 export class MeetingController {
@@ -23,7 +24,7 @@ export class MeetingController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<Meeting | null> {
+  findOne(@Param('id') id: string): Promise<MeetingResponse> {
     return this.meetingService.findOne(id);
   }
 

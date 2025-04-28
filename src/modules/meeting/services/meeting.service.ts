@@ -6,6 +6,8 @@ import { CreateMeetingDto } from '../dtos/request/create-meeting.request';
 import { UserService } from 'src/modules/user/services/user.service';
 import { MeetingMapper } from '../mappers/meeting.mapper';
 import { saveAndLean } from 'src/common/helper/lean.helper';
+import { MeetingPopulated } from 'src/common/types/populated/meeting-populated.type';
+import { MeetingResponse } from '../dtos/response/meeting.response';
 
 @Injectable()
 export class MeetingService {
@@ -23,13 +25,19 @@ export class MeetingService {
       .exec();
   }
 
-  async findOne(id: string): Promise<Meeting | null> {
-    return this.meetingModel
+  async findOne(id: string): Promise<MeetingResponse> {
+    const meeting = await this.meetingModel
       .findById(id)
-      .populate('host')
-      .populate('maleParticipants')
-      .populate('femaleParticipants')
+      .populate({ path: 'maleParticipants', options: { lean: true } })
+      .populate({ path: 'femaleParticipants', options: { lean: true } })
+      .lean<MeetingPopulated>()
       .exec();
+
+    if (!meeting) {
+      throw new BadRequestException('Meeting not found');
+    }
+
+    return MeetingMapper.toDetailResponse(meeting);
   }
 
   async create(createMeetingDto: CreateMeetingDto) {
@@ -39,12 +47,12 @@ export class MeetingService {
       throw new BadRequestException('Host user not found');
     }
 
-    const meetingSchema = MeetingMapper.toSchema(createMeetingDto, hostUser);
+    const meetingSchema = MeetingMapper.toSchema(createMeetingDto);
     const createdMeeting = await saveAndLean<MeetingDocument>(
       new this.meetingModel(meetingSchema),
     );
 
-    return MeetingMapper.toResponse(createdMeeting, hostUser._id.toString());
+    return MeetingMapper.toCreateResponse(createdMeeting);
   }
 
   async update(id: string, meeting: Partial<Meeting>): Promise<Meeting | null> {

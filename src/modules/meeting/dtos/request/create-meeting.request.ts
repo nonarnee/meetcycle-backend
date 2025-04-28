@@ -6,17 +6,15 @@ import {
   IsOptional,
   Min,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
 
 export class CreateMeetingDto {
   @IsNotEmpty()
   @IsString()
-  @Transform(({ value }: { value: string }) => value.trim())
   title: string;
 
   @IsNotEmpty()
   @IsString()
-  hostId: string; // 호스트 ID (ObjectId)
+  hostId: string;
 
   @IsNotEmpty()
   @IsNumber()

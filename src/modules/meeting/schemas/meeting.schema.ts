@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema } from 'mongoose';
-import { User } from '../../user/schemas/user.schema';
+import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 import { Participant } from '../../participant/schemas/participant.schema';
 
 export type MeetingDocument = Meeting & Document;
@@ -11,7 +10,7 @@ export class Meeting {
   title: string;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
-  host: User;
+  host: Types.ObjectId;
 
   @Prop({ required: true })
   maleCount: number;
