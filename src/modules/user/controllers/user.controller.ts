@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Put,
@@ -25,8 +27,15 @@ export class UserController {
   }
 
   @Post()
-  create(@Body() user: User): Promise<User> {
-    return this.userService.create(user);
+  @HttpCode(HttpStatus.CREATED)
+  async create(
+    @Body() user: Omit<User, 'role'>,
+  ): Promise<Omit<User, 'password' | 'role'>> {
+    const createdUser = await this.userService.create(user);
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, role, ...result } = createdUser;
+    return result;
   }
 
   @Put(':id')

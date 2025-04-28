@@ -9,6 +9,7 @@ import { MeetingModule } from './modules/meeting/meeting.module';
 import { RoundModule } from './modules/round/round.module';
 import { ParticipantModule } from './modules/participant/participant.module';
 import { CycleModule } from './modules/cycle/cycle.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { CycleModule } from './modules/cycle/cycle.module';
     RoundModule,
     ParticipantModule,
     CycleModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
