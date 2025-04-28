@@ -4,21 +4,25 @@ import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from '../schemas/user.schema';
 import { UserRole } from '../types/user-role.type';
+import { LeanSchema } from 'src/common/types/lean.type';
 
 @Injectable()
 export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async findAll(): Promise<User[]> {
-    return this.userModel.find().exec();
+  async findAll(): Promise<LeanSchema<User>[]> {
+    return await this.userModel.find().lean<LeanSchema<User>[]>().exec();
   }
 
-  async findOne(id: string): Promise<User | null> {
-    return this.userModel.findById(id).exec();
+  async findOne(id: string): Promise<LeanSchema<User> | null> {
+    return await this.userModel.findById(id).lean<LeanSchema<User>>().exec();
   }
 
-  async findByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ email }).exec();
+  async findByEmail(email: string): Promise<LeanSchema<User> | null> {
+    return await this.userModel
+      .findOne({ email })
+      .lean<LeanSchema<User>>()
+      .exec();
   }
 
   async create(user: Omit<User, 'role'>): Promise<User> {
@@ -29,6 +33,7 @@ export class UserService {
     }
 
     // 비밀번호 암호화
+    console.log('round:', process.env.BCRYPT_SALT_ROUNDS);
     const salt = await bcrypt.genSalt(Number(process.env.BCRYPT_SALT_ROUNDS));
     const hashed = await bcrypt.hash(user.password, salt);
 
@@ -38,14 +43,17 @@ export class UserService {
       password: hashed,
       role: UserRole.PARTICIPANT,
     });
-    return newUser.save();
+    return (await newUser.save()).toObject();
   }
 
-  async update(id: string, user: User): Promise<User | null> {
-    return this.userModel.findByIdAndUpdate(id, user, { new: true }).exec();
+  async update(id: string, user: User): Promise<LeanSchema<User> | null> {
+    return this.userModel
+      .findByIdAndUpdate(id, user, { new: true })
+      .lean<LeanSchema<User>>()
+      .exec();
   }
 
-  async remove(id: string): Promise<User | null> {
-    return this.userModel.findByIdAndDelete(id).exec();
+  async remove(id: string): Promise<LeanSchema<User> | null> {
+    return this.userModel.findByIdAndDelete(id).lean<LeanSchema<User>>().exec();
   }
 }

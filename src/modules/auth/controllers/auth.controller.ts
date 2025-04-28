@@ -1,20 +1,19 @@
-import { Controller, Post, UseGuards, Request } from '@nestjs/common';
-import { LocalAuthGuard } from '../guards/local-auth.guard';
+import { Controller, Post, Body, UnauthorizedException } from '@nestjs/common';
 import { AuthResponse } from '../types/auth-response.type';
 import { AuthService } from '../services/auth.service';
-
-interface AuthRequest extends Request {
-  email: string;
-  password: string;
-}
+import { LoginDto } from '../dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
-  @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Request() req: AuthRequest): Promise<AuthResponse> {
-    return this.authService.login(req.email, req.password);
+  async login(@Body() loginDto: LoginDto): Promise<AuthResponse> {
+    console.log('loginDto', loginDto);
+    const loginResponse = await this.authService.validateUser(loginDto);
+    if (!loginResponse) {
+      throw new UnauthorizedException();
+    }
+    return loginResponse;
   }
 }

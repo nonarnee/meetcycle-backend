@@ -1,12 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Meeting, MeetingDocument } from '../schemas/meeting.schema';
+import { CreateMeetingDto } from '../dtos/request/create-meeting.request';
+import { UserService } from 'src/modules/user/services/user.service';
+import { MeetingMapper } from '../mappers/meeting.mapper';
+import { saveAndLean } from 'src/common/helper/lean.helper';
 
 @Injectable()
 export class MeetingService {
   constructor(
     @InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>,
+    private userService: UserService,
   ) {}
 
   async findAll(): Promise<Meeting[]> {
@@ -27,9 +32,19 @@ export class MeetingService {
       .exec();
   }
 
-  async create(meeting: Meeting): Promise<Meeting> {
-    const newMeeting = new this.meetingModel(meeting);
-    return newMeeting.save();
+  async create(createMeetingDto: CreateMeetingDto) {
+    const hostUser = await this.userService.findOne(createMeetingDto.hostId);
+
+    if (!hostUser) {
+      throw new BadRequestException('Host user not found');
+    }
+
+    const meetingSchema = MeetingMapper.toSchema(createMeetingDto, hostUser);
+    const createdMeeting = await saveAndLean<MeetingDocument>(
+      new this.meetingModel(meetingSchema),
+    );
+
+    return MeetingMapper.toResponse(createdMeeting, hostUser._id.toString());
   }
 
   async update(id: string, meeting: Partial<Meeting>): Promise<Meeting | null> {

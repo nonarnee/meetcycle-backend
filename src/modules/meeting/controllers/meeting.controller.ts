@@ -10,6 +10,8 @@ import {
 } from '@nestjs/common';
 import { MeetingService } from '../services/meeting.service';
 import { Meeting } from '../schemas/meeting.schema';
+import { CreateMeetingDto } from '../dtos/request/create-meeting.request';
+import { CreateMeetingResponse } from '../dtos/response/create-meeting.response';
 
 @Controller('meetings')
 export class MeetingController {
@@ -26,8 +28,10 @@ export class MeetingController {
   }
 
   @Post()
-  create(@Body() meeting: Meeting): Promise<Meeting> {
-    return this.meetingService.create(meeting);
+  create(
+    @Body() createMeetingDto: CreateMeetingDto,
+  ): Promise<CreateMeetingResponse> {
+    return this.meetingService.create(createMeetingDto);
   }
 
   @Put(':id')

@@ -1,14 +1,12 @@
 import {
   IsString,
   IsNotEmpty,
-  IsDate,
   IsArray,
   IsNumber,
   IsOptional,
   Min,
-  IsEnum,
 } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 
 export class CreateMeetingDto {
   @IsNotEmpty()
@@ -18,33 +16,35 @@ export class CreateMeetingDto {
 
   @IsNotEmpty()
   @IsString()
-  host: string; // 사용자 ID (ObjectId)
+  hostId: string; // 호스트 ID (ObjectId)
+
+  @IsNotEmpty()
+  @IsNumber()
+  maleCount: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  femaleCount: number;
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  maleParticipants?: string[]; // Participant ID 배열
+  maleParticipants?: string[] = []; // Participant ID 배열
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  femaleParticipants?: string[]; // Participant ID 배열
+  femaleParticipants?: string[] = []; // Participant ID 배열
 
   @IsNotEmpty()
   @IsString()
   location: string;
 
   @IsNotEmpty()
-  @Type(() => Date)
-  @IsDate()
-  dateTime: Date;
+  @IsString()
+  dateTime: string;
 
-  @IsOptional()
-  @IsEnum(['pending', 'ongoing', 'completed', 'cancelled'])
-  status?: string = 'pending';
-
-  @IsOptional()
   @IsNumber()
   @Min(1)
-  roundDurationMinutes?: number = 10;
+  roundDurationMinutes: number;
 }

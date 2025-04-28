@@ -13,6 +13,12 @@ export class Meeting {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   host: User;
 
+  @Prop({ required: true })
+  maleCount: number;
+
+  @Prop({ required: true })
+  femaleCount: number;
+
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Participant' }] })
   maleParticipants: Participant[];
 
@@ -23,7 +29,7 @@ export class Meeting {
   location: string;
 
   @Prop({ required: true })
-  dateTime: Date;
+  dateTime: string;
 
   @Prop({
     default: 'pending',

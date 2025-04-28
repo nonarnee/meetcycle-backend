@@ -33,9 +33,10 @@ export class UserController {
   ): Promise<Omit<User, 'password' | 'role'>> {
     const createdUser = await this.userService.create(user);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, role, ...result } = createdUser;
-    return result;
+    return {
+      nickname: createdUser.nickname,
+      email: createdUser.email,
+    };
   }
 
   @Put(':id')

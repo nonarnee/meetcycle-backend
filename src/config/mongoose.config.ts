@@ -6,6 +6,7 @@ export const getMongooseConfig = (
   configService: ConfigService,
 ): MongooseModuleOptions => {
   const mongodbUri = configService.get<string>('MONGODB_URI');
+  const mongodbName = configService.get<string>('MONGODB_NAME');
 
   if (!mongodbUri) {
     console.error(
@@ -22,6 +23,7 @@ export const getMongooseConfig = (
 
   return {
     uri: mongodbUri,
+    dbName: mongodbName,
     connectionFactory: (connection: Connection) => {
       connection.on('connected', () => {
         console.log('MongoDB is connected');
