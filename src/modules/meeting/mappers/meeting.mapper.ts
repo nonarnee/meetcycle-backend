@@ -50,8 +50,6 @@ export class MeetingMapper {
   }
 
   static toDetailResponse(meeting: MeetingPopulated): MeetingResponse {
-    console.log(meeting);
-
     return {
       id: meeting._id.toString(),
       title: meeting.title,

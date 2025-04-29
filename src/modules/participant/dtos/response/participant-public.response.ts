@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class ParticipantResponse {
+export class ParticipantPublicResponse {
   @IsNotEmpty()
   @IsString()
   id: string;

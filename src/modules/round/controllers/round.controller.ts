@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Put } from '@nestjs/common';
 import { RoundService } from '../services/round.service';
 import { Round } from '../schemas/round.schema';
 
@@ -22,11 +14,6 @@ export class RoundController {
   @Get(':id')
   findOne(@Param('id') id: string): Promise<Round | null> {
     return this.roundService.findOne(id);
-  }
-
-  @Post()
-  create(@Body() round: Round): Promise<Round> {
-    return this.roundService.create(round);
   }
 
   @Put(':id')

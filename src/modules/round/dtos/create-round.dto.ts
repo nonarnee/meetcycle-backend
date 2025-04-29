@@ -10,10 +10,6 @@ import { Type } from 'class-transformer';
 export class CreateRoundDto {
   @IsNotEmpty()
   @IsString()
-  meeting: string; // Meeting ID (ObjectId)
-
-  @IsNotEmpty()
-  @IsString()
   cycle: string; // Cycle ID (ObjectId)
 
   @IsNotEmpty()

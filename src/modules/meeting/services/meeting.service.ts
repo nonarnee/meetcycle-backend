@@ -1,18 +1,20 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Meeting, MeetingDocument } from '../schemas/meeting.schema';
 import { CreateMeetingDto } from '../dtos/request/create-meeting.request';
 import { UserService } from 'src/modules/user/services/user.service';
 import { MeetingMapper } from '../mappers/meeting.mapper';
+import { CreateParticipantDto } from 'src/modules/participant/dtos/request/create-participant.request';
 import { saveAndLean } from 'src/common/helper/lean.helper';
 import { MeetingPopulated } from 'src/common/types/populated/meeting-populated.type';
 import { MeetingResponse } from '../dtos/response/meeting.response';
-import { Gender } from 'src/common/types/gender.type';
-import { CreateParticipantDto } from 'src/modules/participant/dtos/request/create-participant.request';
 import { ParticipantService } from 'src/modules/participant/services/participant.service';
-import { ParticipantMapper } from 'src/modules/participant/mapper/participant.mapper';
-import { ParticipantResponse } from 'src/modules/participant/dtos/response/participant.response';
+import { CycleService } from 'src/modules/cycle/services/cycle.service';
 
 @Injectable()
 export class MeetingService {
@@ -20,6 +22,7 @@ export class MeetingService {
     @InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>,
     private userService: UserService,
     private participantService: ParticipantService,
+    private cycleService: CycleService,
   ) {}
 
   async findAll(): Promise<Meeting[]> {
@@ -40,7 +43,7 @@ export class MeetingService {
       .exec();
 
     if (!meeting) {
-      throw new BadRequestException('Meeting not found');
+      throw new NotFoundException('Meeting not found');
     }
 
     return MeetingMapper.toDetailResponse(meeting);
@@ -74,52 +77,100 @@ export class MeetingService {
   async addParticipant(
     meetingId: string,
     createParticipantDto: CreateParticipantDto,
-  ): Promise<ParticipantResponse> {
+  ): Promise<Meeting> {
+    const targetMeeting = await this.meetingModel.findById(meetingId).exec();
+
+    if (!targetMeeting) {
+      throw new NotFoundException('Meeting not found');
+    }
+
+    if (targetMeeting.status !== 'pending') {
+      throw new BadRequestException('Meeting is not pending');
+    }
+
+    this.validateParticipantLimit(targetMeeting, createParticipantDto);
+
+    const createdParticipant =
+      await this.participantService.create(createParticipantDto);
+
     const field =
       createParticipantDto.gender === 'male'
         ? 'maleParticipants'
         : 'femaleParticipants';
 
-    const createdParticipant =
-      await this.participantService.create(createParticipantDto);
+    targetMeeting[field].push(createdParticipant._id);
 
-    if (!createdParticipant) {
-      throw new BadRequestException('Participant not created');
-    }
-
-    const updatedMeeting = await this.meetingModel
-      .findByIdAndUpdate(
-        meetingId,
-        { $addToSet: { [field]: createdParticipant._id } },
-        { new: true },
-      )
-      .populate('maleParticipants')
-      .populate('femaleParticipants')
-      .lean<MeetingPopulated>()
-      .exec();
-
-    if (!updatedMeeting) {
-      throw new BadRequestException('Meeting not found');
-    }
-
-    console.log(createdParticipant);
-
-    return ParticipantMapper.toResponse(createdParticipant);
+    return await targetMeeting.save();
   }
 
   async removeParticipant(
     meetingId: string,
     userId: string,
-    gender: Gender,
   ): Promise<Meeting | null> {
-    const field = gender === 'male' ? 'maleParticipants' : 'femaleParticipants';
+    const targetMeeting = await this.meetingModel.findById(meetingId).exec();
+
+    if (!targetMeeting) {
+      throw new NotFoundException('Meeting not found');
+    }
+
+    if (targetMeeting.status !== 'pending') {
+      throw new BadRequestException('Meeting is not pending');
+    }
+
+    const targetParticipant = await this.participantService.findOne(userId);
+
+    if (!targetParticipant) {
+      throw new NotFoundException('Participant not found');
+    }
+
+    const field =
+      targetParticipant.gender === 'male'
+        ? 'maleParticipants'
+        : 'femaleParticipants';
+
     return this.meetingModel
       .findByIdAndUpdate(
         meetingId,
-        { $pull: { [field]: userId } },
+        { $pull: { [field]: targetParticipant._id } },
         { new: true },
       )
       .exec();
+  }
+
+  async start(id: string): Promise<Meeting | null> {
+    const targetMeeting = await this.meetingModel.findById(id).exec();
+
+    if (!targetMeeting) {
+      throw new NotFoundException('Meeting not found');
+    }
+    if (targetMeeting.status !== 'pending') {
+      throw new BadRequestException('Meeting is not pending');
+    }
+
+    await this.cycleService.create(targetMeeting, 0);
+
+    targetMeeting.status = 'ongoing';
+    targetMeeting.currentCycleOrder = 0;
+    const updatedMeeting = await targetMeeting.save();
+
+    return updatedMeeting;
+  }
+
+  async cancel(meetingId: string): Promise<MeetingDocument> {
+    const meeting = await this.meetingModel.findById(meetingId);
+    if (!meeting) throw new NotFoundException('미팅을 찾을 수 없습니다');
+
+    // 진행 중인 미팅이면 현재 사이클 종료
+    if (meeting.status === 'ongoing') {
+      await this.cycleService.completeCycle(
+        meetingId,
+        meeting.currentCycleOrder,
+      );
+    }
+
+    // 미팅 상태 변경
+    meeting.status = 'cancelled';
+    return meeting.save();
   }
 
   async getMeetingsByHost(hostId: string): Promise<Meeting[]> {
@@ -140,5 +191,23 @@ export class MeetingService {
       .populate('maleParticipants')
       .populate('femaleParticipants')
       .exec();
+  }
+
+  private validateParticipantLimit(
+    meeting: Meeting,
+    createParticipantDto: CreateParticipantDto,
+  ) {
+    const gender = createParticipantDto.gender;
+    const field = gender === 'male' ? 'maleParticipants' : 'femaleParticipants';
+    const limit = gender === 'male' ? meeting.maleCount : meeting.femaleCount;
+    const participants = meeting[field];
+
+    if (meeting.status !== 'pending') {
+      throw new BadRequestException('Meeting is already started');
+    }
+
+    if (participants.length >= limit) {
+      throw new BadRequestException(`${gender} participant is full`);
+    }
   }
 }

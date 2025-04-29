@@ -6,16 +6,13 @@ import {
   Param,
   Post,
   Put,
-  Query,
 } from '@nestjs/common';
 import { MeetingService } from '../services/meeting.service';
 import { Meeting } from '../schemas/meeting.schema';
 import { CreateMeetingDto } from '../dtos/request/create-meeting.request';
 import { CreateMeetingResponse } from '../dtos/response/create-meeting.response';
 import { MeetingResponse } from '../dtos/response/meeting.response';
-import { Gender } from 'src/common/types/gender.type';
 import { CreateParticipantDto } from 'src/modules/participant/dtos/request/create-participant.request';
-import { ParticipantResponse } from 'src/modules/participant/dtos/response/participant.response';
 
 @Controller('meetings')
 export class MeetingController {
@@ -46,6 +43,11 @@ export class MeetingController {
     return this.meetingService.update(id, meeting);
   }
 
+  @Put(':id/start')
+  start(@Param('id') id: string): Promise<Meeting | null> {
+    return this.meetingService.start(id);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string): Promise<Meeting | null> {
     return this.meetingService.remove(id);
@@ -55,7 +57,7 @@ export class MeetingController {
   addParticipant(
     @Param('id') id: string,
     @Body() createParticipantDto: CreateParticipantDto,
-  ): Promise<ParticipantResponse> {
+  ): Promise<Meeting> {
     return this.meetingService.addParticipant(id, createParticipantDto);
   }
 
@@ -63,9 +65,8 @@ export class MeetingController {
   removeParticipant(
     @Param('id') id: string,
     @Param('userId') userId: string,
-    @Query('gender') gender: Gender,
   ): Promise<Meeting | null> {
-    return this.meetingService.removeParticipant(id, userId, gender);
+    return this.meetingService.removeParticipant(id, userId);
   }
 
   @Get('host/:hostId')

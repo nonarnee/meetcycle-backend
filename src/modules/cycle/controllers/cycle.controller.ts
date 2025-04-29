@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   Param,
   Delete,
@@ -9,18 +8,12 @@ import {
   Query,
 } from '@nestjs/common';
 import { CycleService } from '../services/cycle.service';
-import { CreateCycleDto } from '../dtos/create-cycle.dto';
 import { UpdateCycleDto } from '../dtos/update-cycle.dto';
 import { Cycle } from '../schemas/cycle.schema';
 
 @Controller('cycles')
 export class CycleController {
   constructor(private readonly cycleService: CycleService) {}
-
-  @Post()
-  create(@Body() createCycleDto: CreateCycleDto): Promise<Cycle> {
-    return this.cycleService.create(createCycleDto);
-  }
 
   @Get()
   findAll(@Query('meetingId') meetingId?: string): Promise<Cycle[]> {

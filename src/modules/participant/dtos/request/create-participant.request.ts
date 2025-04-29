@@ -1,17 +1,9 @@
-import {
-  IsString,
-  IsNotEmpty,
-  IsNumber,
-  Min,
-  IsOptional,
-} from 'class-validator';
-import { Transform } from 'class-transformer';
+import { IsString, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { Gender } from 'src/common/types/gender.type';
 
 export class CreateParticipantDto {
   @IsNotEmpty()
   @IsString()
-  @Transform(({ value }: { value: string }) => value.trim())
   nickname: string;
 
   @IsNotEmpty()
@@ -19,18 +11,19 @@ export class CreateParticipantDto {
 
   @IsNotEmpty()
   @IsNumber()
-  @Min(18)
   age: number;
 
   @IsNotEmpty()
   @IsString()
-  @Transform(({ value }: { value: string }) => value.trim())
   job: string;
 
   @IsNotEmpty()
   @IsString()
-  @Transform(({ value }: { value: string }) => value.trim())
   comment: string;
+
+  @IsNotEmpty()
+  @IsString()
+  phone: string;
 
   @IsOptional()
   @IsString()

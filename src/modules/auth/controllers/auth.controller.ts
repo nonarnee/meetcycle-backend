@@ -9,7 +9,6 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() loginDto: LoginDto): Promise<AuthResponse> {
-    console.log('loginDto', loginDto);
     const loginResponse = await this.authService.validateUser(loginDto);
     if (!loginResponse) {
       throw new UnauthorizedException();

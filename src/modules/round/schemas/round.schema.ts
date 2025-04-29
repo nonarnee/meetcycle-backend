@@ -1,32 +1,26 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema } from 'mongoose';
-import { Meeting } from '../../meeting/schemas/meeting.schema';
-import { Cycle } from '../../cycle/schemas/cycle.schema';
-import { Participant } from '../../participant/schemas/participant.schema';
+import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 
-export type RoundDocument = Round & Document;
+export type RoundDocument = Round & Document<Types.ObjectId>;
 
 @Schema({ timestamps: true })
 export class Round {
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Meeting', required: true })
-  meeting: Meeting;
-
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Cycle', required: true })
-  cycle: Cycle;
+  cycle: Types.ObjectId;
 
   @Prop({
     type: MongooseSchema.Types.ObjectId,
     ref: 'Participant',
     required: true,
   })
-  maleParticipant: Participant;
+  maleParticipant: Types.ObjectId;
 
   @Prop({
     type: MongooseSchema.Types.ObjectId,
     ref: 'Participant',
     required: true,
   })
-  femaleParticipant: Participant;
+  femaleParticipant: Types.ObjectId;
 
   @Prop({ default: 'pending', enum: ['pending', 'ongoing', 'completed'] })
   status: string;
@@ -39,9 +33,6 @@ export class Round {
 
   @Prop({ default: false })
   isMatched: boolean;
-
-  @Prop({ type: Date, default: null })
-  completedAt: Date | null;
 }
 
 export const RoundSchema = SchemaFactory.createForClass(Round);

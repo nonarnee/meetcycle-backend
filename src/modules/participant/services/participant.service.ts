@@ -7,8 +7,8 @@ import {
 } from '../schemas/participant.schema';
 import { CreateParticipantDto } from '../dtos/request/create-participant.request';
 import { UpdateParticipantDto } from '../dtos/request/update-participant.request';
-import { saveAndLean } from 'src/common/helper/lean.helper';
 import { LeanSchema } from 'src/common/types/lean.type';
+
 @Injectable()
 export class ParticipantService {
   constructor(
@@ -20,8 +20,8 @@ export class ParticipantService {
     return this.participantModel.find().exec();
   }
 
-  async findOne(id: string): Promise<Participant | null> {
-    return this.participantModel.findById(id).exec();
+  async findOne(id: string): Promise<LeanSchema<Participant> | null> {
+    return this.participantModel.findById(id).lean().exec();
   }
 
   async findByGender(gender: string): Promise<Participant[]> {
@@ -30,9 +30,8 @@ export class ParticipantService {
 
   async create(
     createParticipantDto: CreateParticipantDto,
-  ): Promise<LeanSchema<Participant>> {
-    const newParticipant = new this.participantModel(createParticipantDto);
-    return saveAndLean<ParticipantDocument>(newParticipant);
+  ): Promise<ParticipantDocument> {
+    return await this.participantModel.create(createParticipantDto);
   }
 
   async update(

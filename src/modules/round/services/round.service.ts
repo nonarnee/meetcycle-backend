@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Round, RoundDocument } from '../schemas/round.schema';
 import { Gender } from 'src/common/types/gender.type';
+import { MeetingDocument } from 'src/modules/meeting/schemas/meeting.schema';
+import { CycleDocument } from 'src/modules/cycle/schemas/cycle.schema';
 
 @Injectable()
 export class RoundService {
@@ -28,13 +30,39 @@ export class RoundService {
       .exec();
   }
 
-  async create(round: Round): Promise<Round> {
-    const newRound = new this.roundModel(round);
-    return newRound.save();
+  async findByCycle(cycleId: string): Promise<Round[]> {
+    return this.roundModel.find({ cycle: cycleId }).exec();
+  }
+
+  async create(meeting: MeetingDocument, cycle: CycleDocument) {
+    const maleParticipants = meeting.maleParticipants;
+    const femaleParticipants = meeting.femaleParticipants;
+
+    const matches = this.computeOptimalMatching(
+      maleParticipants,
+      femaleParticipants,
+      cycle.order,
+    );
+
+    const roomPromises = matches.map((match, index) => {
+      return this.roundModel.create({
+        cycle: cycle._id,
+        roomNumber: index + 1,
+        maleParticipant: match.male,
+        femaleParticipant: match.female,
+        status: 'ongoing',
+      });
+    });
+
+    return await Promise.all(roomPromises);
   }
 
   async update(id: string, round: Partial<Round>): Promise<Round | null> {
     return this.roundModel.findByIdAndUpdate(id, round, { new: true }).exec();
+  }
+
+  async updateAllStatus(cycleId: Types.ObjectId, status: string) {
+    return this.roundModel.updateMany({ cycle: cycleId }, { status }).exec();
   }
 
   async remove(id: string): Promise<Round | null> {
@@ -82,5 +110,29 @@ export class RoundService {
     }
 
     return round;
+  }
+
+  private computeOptimalMatching(
+    males: Types.ObjectId[],
+    females: Types.ObjectId[],
+    cycleOrder: number,
+  ): Array<{ male: Types.ObjectId; female: Types.ObjectId }> {
+    const count = Math.min(males.length, females.length);
+    const activeMales = males.slice(0, count);
+    const activeFemales = females.slice(0, count);
+
+    const rotation = cycleOrder % count;
+    const matches: Array<{ male: Types.ObjectId; female: Types.ObjectId }> = [];
+
+    for (let i = 0; i < count; i++) {
+      const femaleIndex = (i + rotation) % count;
+
+      matches.push({
+        male: activeMales[i],
+        female: activeFemales[femaleIndex],
+      });
+    }
+
+    return matches;
   }
 }

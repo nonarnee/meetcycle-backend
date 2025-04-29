@@ -1,22 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Cycle } from '../schemas/cycle.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { CycleDocument } from '../schemas/cycle.schema';
 import { Model } from 'mongoose';
-import { Round, RoundDocument } from 'src/modules/round/schemas/round.schema';
-import {
-  Meeting,
-  MeetingDocument,
-} from 'src/modules/meeting/schemas/meeting.schema';
-import { CreateCycleDto } from '../dtos/create-cycle.dto';
 import { UpdateCycleDto } from '../dtos/update-cycle.dto';
+import { RoundService } from 'src/modules/round/services/round.service';
+import { MeetingDocument } from 'src/modules/meeting/schemas/meeting.schema';
 
 @Injectable()
 export class CycleService {
   constructor(
     @InjectModel(Cycle.name) private cycleModel: Model<CycleDocument>,
-    @InjectModel(Round.name) private roundModel: Model<RoundDocument>,
-    @InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>,
+    private roundService: RoundService,
   ) {}
 
   async findAll(): Promise<Cycle[]> {
@@ -31,9 +30,35 @@ export class CycleService {
     return this.cycleModel.find({ meeting: meetingId }).exec();
   }
 
-  async create(createCycleDto: CreateCycleDto): Promise<Cycle> {
-    const newCycle = new this.cycleModel(createCycleDto);
-    return newCycle.save();
+  async create(
+    targetMeeting: MeetingDocument,
+    order: number,
+  ): Promise<CycleDocument> {
+    let cycle = await this.cycleModel.findOne({
+      meeting: targetMeeting._id,
+      order,
+    });
+
+    if (!cycle) {
+      cycle = new this.cycleModel({
+        meeting: targetMeeting._id,
+        order,
+        status: 'pending',
+        allRoundsCompleted: false,
+      });
+      cycle = await cycle.save();
+    }
+
+    const createdRounds = await this.roundService.create(targetMeeting, cycle);
+
+    if (!createdRounds) {
+      throw new BadRequestException('Failed to create rounds');
+    }
+
+    cycle.status = 'ongoing';
+    const updatedCycle = await cycle.save();
+
+    return updatedCycle;
   }
 
   async update(
@@ -66,7 +91,7 @@ export class CycleService {
 
   // 사이클의 모든 라운드가 완료되었는지 확인하는 메서드
   async checkAllRoundsCompleted(cycleId: string): Promise<boolean> {
-    const rounds = await this.roundModel.find({ cycle: cycleId }).exec();
+    const rounds = await this.roundService.findByCycle(cycleId);
 
     // 모든 라운드에서 양쪽 참가자가 liked 여부를 선택했는지 확인
     const allCompleted = rounds.every(
@@ -91,78 +116,23 @@ export class CycleService {
     return allCompleted;
   }
 
-  // 호스트가 수동으로 다음 사이클로 진행
-  async progressToNextCycle(
+  async completeCycle(
     meetingId: string,
-    hostId: string,
-  ): Promise<Cycle | null> {
-    // 호스트 권한 확인
-    const meeting = await this.meetingModel
-      .findOne({
-        _id: meetingId,
-        host: hostId,
-      })
-      .exec();
+    cycleOrder: number,
+  ): Promise<CycleDocument> {
+    const cycle = await this.cycleModel.findOne({
+      meeting: meetingId,
+      cycleOrder: cycleOrder,
+    });
 
-    if (!meeting) {
-      throw new Error('Meeting not found or you are not the host');
-    }
+    if (!cycle) throw new NotFoundException('Cycle not found');
 
-    // 현재 사이클 완료 처리
-    if (meeting.currentCycleOrder > 0) {
-      const currentCycle = await this.cycleModel
-        .findOne({
-          meeting: meetingId,
-          cycleOrder: meeting.currentCycleOrder,
-        })
-        .exec();
+    // 모든 방 완료 처리
+    await this.roundService.updateAllStatus(cycle._id, 'completed');
 
-      if (currentCycle && currentCycle.status !== 'completed') {
-        await this.cycleModel
-          .findByIdAndUpdate(currentCycle._id, {
-            status: 'completed',
-            manualProgress: true,
-            endTime: new Date(),
-          })
-          .exec();
-      }
-    }
+    // 사이클 완료 처리
+    cycle.status = 'completed';
 
-    // 다음 사이클 번호
-    const nextCycleOrder = meeting.currentCycleOrder + 1;
-
-    // 총 사이클 수 확인
-    if (nextCycleOrder > meeting.totalCycles) {
-      // 모든 사이클 완료, 미팅 완료 처리
-      await this.meetingModel
-        .findByIdAndUpdate(meetingId, { status: 'completed' })
-        .exec();
-
-      return null;
-    }
-
-    // 다음 사이클 시작
-    const nextCycle = await this.cycleModel
-      .findOneAndUpdate(
-        { meeting: meetingId, cycleOrder: nextCycleOrder },
-        {
-          status: 'ongoing',
-          startTime: new Date(),
-        },
-        { new: true },
-      )
-      .exec();
-
-    // 미팅의 현재 사이클 번호 업데이트
-    await this.meetingModel
-      .findByIdAndUpdate(meetingId, { currentCycleOrder: nextCycleOrder })
-      .exec();
-
-    // 해당 사이클의 모든 라운드를 'ongoing'으로 변경
-    await this.roundModel
-      .updateMany({ cycle: nextCycle?._id }, { status: 'ongoing' })
-      .exec();
-
-    return nextCycle;
+    return cycle.save();
   }
 }

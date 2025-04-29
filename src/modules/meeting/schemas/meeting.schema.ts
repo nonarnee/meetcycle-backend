@@ -1,8 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema, Types } from 'mongoose';
-import { Participant } from '../../participant/schemas/participant.schema';
 
-export type MeetingDocument = Meeting & Document;
+export type MeetingDocument = Meeting & Document<Types.ObjectId>;
 
 @Schema({ timestamps: true })
 export class Meeting {
@@ -19,10 +18,10 @@ export class Meeting {
   femaleCount: number;
 
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Participant' }] })
-  maleParticipants: Participant[];
+  maleParticipants: Types.ObjectId[];
 
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Participant' }] })
-  femaleParticipants: Participant[];
+  femaleParticipants: Types.ObjectId[];
 
   @Prop({ required: true })
   location: string;

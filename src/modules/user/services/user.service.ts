@@ -34,7 +34,6 @@ export class UserService {
     }
 
     // 비밀번호 암호화
-    console.log('round:', process.env.BCRYPT_SALT_ROUNDS);
     const salt = await bcrypt.genSalt(Number(process.env.BCRYPT_SALT_ROUNDS));
     const hashed = await bcrypt.hash(user.password, salt);
 

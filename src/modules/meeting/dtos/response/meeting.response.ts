@@ -6,7 +6,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { ParticipantResponse } from 'src/modules/participant/dtos/response/participant.response';
+import { ParticipantPublicResponse } from 'src/modules/participant/dtos/response/participant-public.response';
 
 export class MeetingResponse {
   @IsNotEmpty()
@@ -56,12 +56,12 @@ export class MeetingResponse {
   @IsNotEmpty()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => ParticipantResponse)
-  maleParticipants: ParticipantResponse[];
+  @Type(() => ParticipantPublicResponse)
+  maleParticipants: ParticipantPublicResponse[];
 
   @IsNotEmpty()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => ParticipantResponse)
-  femaleParticipants: ParticipantResponse[];
+  @Type(() => ParticipantPublicResponse)
+  femaleParticipants: ParticipantPublicResponse[];
 }
