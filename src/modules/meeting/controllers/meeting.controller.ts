@@ -28,6 +28,11 @@ export class MeetingController {
     return this.meetingService.findOne(id);
   }
 
+  @Get(':id/rooms/current')
+  getCurrentRooms(@Param('id') id: string) {
+    return this.meetingService.getCurrentRooms(id);
+  }
+
   @Post()
   create(
     @Body() createMeetingDto: CreateMeetingDto,

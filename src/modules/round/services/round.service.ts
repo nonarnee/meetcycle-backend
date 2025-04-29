@@ -16,8 +16,8 @@ export class RoundService {
     return this.roundModel
       .find()
       .populate('meeting')
-      .populate('participant1')
-      .populate('participant2')
+      .populate('maleParticipant')
+      .populate('femaleParticipant')
       .exec();
   }
 
@@ -25,13 +25,24 @@ export class RoundService {
     return this.roundModel
       .findById(id)
       .populate('meeting')
-      .populate('participant1')
-      .populate('participant2')
+      .populate('maleParticipant')
+      .populate('femaleParticipant')
       .exec();
   }
 
-  async findByCycle(cycleId: string): Promise<Round[]> {
-    return this.roundModel.find({ cycle: cycleId }).exec();
+  async findByCycle(cycle: CycleDocument) {
+    return this.roundModel
+      .find({ cycle: cycle._id })
+      .populate({
+        path: 'maleParticipant',
+        select: '-phone',
+      })
+      .populate({
+        path: 'femaleParticipant',
+        select: '-phone',
+      })
+      .lean()
+      .exec();
   }
 
   async create(meeting: MeetingDocument, cycle: CycleDocument) {
@@ -73,19 +84,25 @@ export class RoundService {
     return this.roundModel
       .find({ meeting: meetingId })
       .populate('meeting')
-      .populate('participant1')
-      .populate('participant2')
+      .populate({
+        path: 'maleParticipant',
+        select: '-phone',
+      })
+      .populate({
+        path: 'femaleParticipant',
+        select: '-phone',
+      })
       .exec();
   }
 
   async findByParticipant(userId: string): Promise<Round[]> {
     return this.roundModel
       .find({
-        $or: [{ participant1: userId }, { participant2: userId }],
+        $or: [{ maleParticipant: userId }, { femaleParticipant: userId }],
       })
       .populate('meeting')
-      .populate('participant1')
-      .populate('participant2')
+      .populate('maleParticipant')
+      .populate('femaleParticipant')
       .exec();
   }
 

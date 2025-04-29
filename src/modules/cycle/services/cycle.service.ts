@@ -30,6 +30,13 @@ export class CycleService {
     return this.cycleModel.find({ meeting: meetingId }).exec();
   }
 
+  async findByMeetingAndOrder(
+    meetingId: string,
+    order: number,
+  ): Promise<CycleDocument | null> {
+    return this.cycleModel.findOne({ meeting: meetingId, order }).exec();
+  }
+
   async create(
     targetMeeting: MeetingDocument,
     order: number,
@@ -87,33 +94,6 @@ export class CycleService {
     return this.cycleModel
       .findByIdAndUpdate(id, { allRoundsCompleted: completed }, { new: true })
       .exec();
-  }
-
-  // 사이클의 모든 라운드가 완료되었는지 확인하는 메서드
-  async checkAllRoundsCompleted(cycleId: string): Promise<boolean> {
-    const rounds = await this.roundService.findByCycle(cycleId);
-
-    // 모든 라운드에서 양쪽 참가자가 liked 여부를 선택했는지 확인
-    const allCompleted = rounds.every(
-      (round) => round.maleLiked !== null && round.femaleLiked !== null,
-    );
-
-    if (allCompleted) {
-      // 사이클 상태 업데이트
-      await this.cycleModel
-        .findByIdAndUpdate(
-          cycleId,
-          {
-            allRoundsCompleted: true,
-            status: 'completed',
-            endTime: new Date(),
-          },
-          { new: true },
-        )
-        .exec();
-    }
-
-    return allCompleted;
   }
 
   async completeCycle(

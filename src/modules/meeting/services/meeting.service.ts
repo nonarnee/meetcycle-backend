@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Meeting, MeetingDocument } from '../schemas/meeting.schema';
 import { CreateMeetingDto } from '../dtos/request/create-meeting.request';
 import { UserService } from 'src/modules/user/services/user.service';
@@ -15,6 +15,7 @@ import { MeetingPopulated } from 'src/common/types/populated/meeting-populated.t
 import { MeetingResponse } from '../dtos/response/meeting.response';
 import { ParticipantService } from 'src/modules/participant/services/participant.service';
 import { CycleService } from 'src/modules/cycle/services/cycle.service';
+import { RoundService } from 'src/modules/round/services/round.service';
 
 @Injectable()
 export class MeetingService {
@@ -23,6 +24,7 @@ export class MeetingService {
     private userService: UserService,
     private participantService: ParticipantService,
     private cycleService: CycleService,
+    private roundService: RoundService,
   ) {}
 
   async findAll(): Promise<Meeting[]> {
@@ -47,6 +49,27 @@ export class MeetingService {
     }
 
     return MeetingMapper.toDetailResponse(meeting);
+  }
+
+  async getCurrentRooms(id: string) {
+    const meeting = await this.meetingModel
+      .findById(new Types.ObjectId(id))
+      .exec();
+
+    if (!meeting) {
+      throw new NotFoundException('Meeting not found');
+    }
+
+    const currentCycle = await this.cycleService.findByMeetingAndOrder(
+      meeting._id.toString(),
+      meeting.currentCycleOrder,
+    );
+
+    if (!currentCycle) {
+      throw new NotFoundException('Current cycle not found');
+    }
+
+    return await this.roundService.findByCycle(currentCycle);
   }
 
   async create(createMeetingDto: CreateMeetingDto) {
