@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Round, RoundDocument } from '../schemas/round.schema';
+import { Gender } from 'src/common/types/gender.type';
 
 @Injectable()
 export class RoundService {
@@ -62,7 +63,7 @@ export class RoundService {
 
   async updateLiked(
     id: string,
-    gender: 'male' | 'female',
+    gender: Gender,
     liked: boolean,
   ): Promise<Round | null> {
     const field = gender === 'male' ? 'maleLiked' : 'femaleLiked';

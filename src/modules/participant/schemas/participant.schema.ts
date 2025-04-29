@@ -1,5 +1,6 @@
 import { Schema, SchemaFactory, Prop } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema, Types } from 'mongoose';
+import { Gender } from 'src/common/types/gender.type';
 
 export type ParticipantDocument = Participant & Document;
 
@@ -8,8 +9,8 @@ export class Participant {
   @Prop({ required: true })
   nickname: string;
 
-  @Prop({ required: true, enum: ['male', 'female'] })
-  gender: string;
+  @Prop({ required: true })
+  gender: Gender;
 
   @Prop({ required: true })
   age: number;

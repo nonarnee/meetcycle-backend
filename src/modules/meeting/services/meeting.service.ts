@@ -8,12 +8,18 @@ import { MeetingMapper } from '../mappers/meeting.mapper';
 import { saveAndLean } from 'src/common/helper/lean.helper';
 import { MeetingPopulated } from 'src/common/types/populated/meeting-populated.type';
 import { MeetingResponse } from '../dtos/response/meeting.response';
+import { Gender } from 'src/common/types/gender.type';
+import { CreateParticipantDto } from 'src/modules/participant/dtos/request/create-participant.request';
+import { ParticipantService } from 'src/modules/participant/services/participant.service';
+import { ParticipantMapper } from 'src/modules/participant/mapper/participant.mapper';
+import { ParticipantResponse } from 'src/modules/participant/dtos/response/participant.response';
 
 @Injectable()
 export class MeetingService {
   constructor(
     @InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>,
     private userService: UserService,
+    private participantService: ParticipantService,
   ) {}
 
   async findAll(): Promise<Meeting[]> {
@@ -67,23 +73,44 @@ export class MeetingService {
 
   async addParticipant(
     meetingId: string,
-    userId: string,
-    gender: 'male' | 'female',
-  ): Promise<Meeting | null> {
-    const field = gender === 'male' ? 'maleParticipants' : 'femaleParticipants';
-    return this.meetingModel
+    createParticipantDto: CreateParticipantDto,
+  ): Promise<ParticipantResponse> {
+    const field =
+      createParticipantDto.gender === 'male'
+        ? 'maleParticipants'
+        : 'femaleParticipants';
+
+    const createdParticipant =
+      await this.participantService.create(createParticipantDto);
+
+    if (!createdParticipant) {
+      throw new BadRequestException('Participant not created');
+    }
+
+    const updatedMeeting = await this.meetingModel
       .findByIdAndUpdate(
         meetingId,
-        { $addToSet: { [field]: userId } },
+        { $addToSet: { [field]: createdParticipant._id } },
         { new: true },
       )
+      .populate('maleParticipants')
+      .populate('femaleParticipants')
+      .lean<MeetingPopulated>()
       .exec();
+
+    if (!updatedMeeting) {
+      throw new BadRequestException('Meeting not found');
+    }
+
+    console.log(createdParticipant);
+
+    return ParticipantMapper.toResponse(createdParticipant);
   }
 
   async removeParticipant(
     meetingId: string,
     userId: string,
-    gender: 'male' | 'female',
+    gender: Gender,
   ): Promise<Meeting | null> {
     const field = gender === 'male' ? 'maleParticipants' : 'femaleParticipants';
     return this.meetingModel

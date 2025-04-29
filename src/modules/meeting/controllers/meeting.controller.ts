@@ -13,6 +13,9 @@ import { Meeting } from '../schemas/meeting.schema';
 import { CreateMeetingDto } from '../dtos/request/create-meeting.request';
 import { CreateMeetingResponse } from '../dtos/response/create-meeting.response';
 import { MeetingResponse } from '../dtos/response/meeting.response';
+import { Gender } from 'src/common/types/gender.type';
+import { CreateParticipantDto } from 'src/modules/participant/dtos/request/create-participant.request';
+import { ParticipantResponse } from 'src/modules/participant/dtos/response/participant.response';
 
 @Controller('meetings')
 export class MeetingController {
@@ -51,17 +54,16 @@ export class MeetingController {
   @Post(':id/participants')
   addParticipant(
     @Param('id') id: string,
-    @Body('userId') userId: string,
-    @Body('gender') gender: 'male' | 'female',
-  ): Promise<Meeting | null> {
-    return this.meetingService.addParticipant(id, userId, gender);
+    @Body() createParticipantDto: CreateParticipantDto,
+  ): Promise<ParticipantResponse> {
+    return this.meetingService.addParticipant(id, createParticipantDto);
   }
 
   @Delete(':id/participants/:userId')
   removeParticipant(
     @Param('id') id: string,
     @Param('userId') userId: string,
-    @Query('gender') gender: 'male' | 'female',
+    @Query('gender') gender: Gender,
   ): Promise<Meeting | null> {
     return this.meetingService.removeParticipant(id, userId, gender);
   }

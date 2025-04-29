@@ -5,9 +5,10 @@ import {
   Participant,
   ParticipantDocument,
 } from '../schemas/participant.schema';
-import { CreateParticipantDto } from '../dtos/create-participant.dto';
-import { UpdateParticipantDto } from '../dtos/update-participant.dto';
-
+import { CreateParticipantDto } from '../dtos/request/create-participant.request';
+import { UpdateParticipantDto } from '../dtos/request/update-participant.request';
+import { saveAndLean } from 'src/common/helper/lean.helper';
+import { LeanSchema } from 'src/common/types/lean.type';
 @Injectable()
 export class ParticipantService {
   constructor(
@@ -29,9 +30,9 @@ export class ParticipantService {
 
   async create(
     createParticipantDto: CreateParticipantDto,
-  ): Promise<Participant> {
+  ): Promise<LeanSchema<Participant>> {
     const newParticipant = new this.participantModel(createParticipantDto);
-    return newParticipant.save();
+    return saveAndLean<ParticipantDocument>(newParticipant);
   }
 
   async update(

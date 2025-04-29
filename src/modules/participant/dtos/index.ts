@@ -1,2 +1,2 @@
-export * from './create-participant.dto';
-export * from './update-participant.dto';
+export * from './request/create-participant.request';
+export * from './request/update-participant.request';

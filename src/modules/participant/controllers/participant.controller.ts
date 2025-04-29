@@ -9,8 +9,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { ParticipantService } from '../services/participant.service';
-import { CreateParticipantDto } from '../dtos/create-participant.dto';
-import { UpdateParticipantDto } from '../dtos/update-participant.dto';
+import { CreateParticipantDto } from '../dtos/request/create-participant.request';
+import { UpdateParticipantDto } from '../dtos/request/update-participant.request';
 import { Participant } from '../schemas/participant.schema';
 
 @Controller('participants')

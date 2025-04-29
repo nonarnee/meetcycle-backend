@@ -1,5 +1,6 @@
-import { IsString, IsOptional, IsNumber, Min, IsEnum } from 'class-validator';
+import { IsString, IsOptional, IsNumber, Min } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { Gender } from 'src/common/types/gender.type';
 
 export class UpdateParticipantDto {
   @IsOptional()
@@ -8,8 +9,7 @@ export class UpdateParticipantDto {
   name?: string;
 
   @IsOptional()
-  @IsEnum(['male', 'female'])
-  gender?: string;
+  gender?: Gender;
 
   @IsOptional()
   @IsNumber()

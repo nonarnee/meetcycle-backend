@@ -3,20 +3,19 @@ import {
   IsNotEmpty,
   IsNumber,
   Min,
-  IsEnum,
   IsOptional,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { Gender } from 'src/common/types/gender.type';
 
 export class CreateParticipantDto {
   @IsNotEmpty()
   @IsString()
   @Transform(({ value }: { value: string }) => value.trim())
-  name: string;
+  nickname: string;
 
   @IsNotEmpty()
-  @IsEnum(['male', 'female'])
-  gender: string;
+  gender: Gender;
 
   @IsNotEmpty()
   @IsNumber()
