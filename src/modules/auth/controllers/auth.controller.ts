@@ -4,15 +4,23 @@ import {
   Body,
   UnauthorizedException,
   Res,
+  Get,
+  Req,
 } from '@nestjs/common';
 import { AuthResponse } from '../types/auth-response.type';
 import { AuthService } from '../services/auth.service';
 import { LoginDto } from '../dto';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { Public } from 'src/common/decorators/public.decorator';
+import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from '../types/jwt-payload.type';
+
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   @Post('login')
   @Public()
@@ -34,6 +42,22 @@ export class AuthController {
       id: loginResponse.user._id.toString(),
       nickname: loginResponse.user.nickname,
       role: loginResponse.user.role,
+    };
+  }
+
+  @Get('me')
+  @Public()
+  async me(@Req() req: Request) {
+    const token = req.cookies?.access_token;
+    if (!token) {
+      throw new UnauthorizedException('인증 정보가 없습니다');
+    }
+
+    const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
+    return {
+      id: payload.sub,
+      nickname: payload.nickname,
+      role: payload.role,
     };
   }
 }
