@@ -28,9 +28,14 @@ export class MeetingController {
     return this.meetingService.findOne(id);
   }
 
+  @Get(':id/current-cycle')
+  findCurrentCycle(@Param('id') id: string) {
+    return this.meetingService.findCurrentCycle(id);
+  }
+
   @Get(':id/rooms/current')
   getCurrentRooms(@Param('id') id: string) {
-    return this.meetingService.getCurrentRooms(id);
+    return this.meetingService.findCurrentRooms(id);
   }
 
   @Post()
@@ -51,6 +56,11 @@ export class MeetingController {
   @Put(':id/start')
   start(@Param('id') id: string): Promise<Meeting | null> {
     return this.meetingService.start(id);
+  }
+
+  @Put(':id/next-cycle')
+  advanceToNextCycle(@Param('id') id: string) {
+    return this.meetingService.advanceToNextCycle(id);
   }
 
   @Delete(':id')

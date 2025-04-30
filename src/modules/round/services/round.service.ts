@@ -53,6 +53,7 @@ export class RoundService {
       maleParticipants,
       femaleParticipants,
       cycle.order,
+      meeting.totalCycles,
     );
 
     const roomPromises = matches.map((match, index) => {
@@ -133,20 +134,15 @@ export class RoundService {
     males: Types.ObjectId[],
     females: Types.ObjectId[],
     cycleOrder: number,
+    totalCycles: number,
   ): Array<{ male: Types.ObjectId; female: Types.ObjectId }> {
-    const count = Math.min(males.length, females.length);
-    const activeMales = males.slice(0, count);
-    const activeFemales = females.slice(0, count);
+    const matches: { male: Types.ObjectId; female: Types.ObjectId }[] = [];
 
-    const rotation = cycleOrder % count;
-    const matches: Array<{ male: Types.ObjectId; female: Types.ObjectId }> = [];
-
-    for (let i = 0; i < count; i++) {
-      const femaleIndex = (i + rotation) % count;
-
+    for (let maleIndex = 0; maleIndex < totalCycles; maleIndex++) {
+      const femaleIndex = (maleIndex + cycleOrder) % totalCycles;
       matches.push({
-        male: activeMales[i],
-        female: activeFemales[femaleIndex],
+        male: males[maleIndex],
+        female: females[femaleIndex],
       });
     }
 

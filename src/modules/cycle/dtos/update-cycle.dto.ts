@@ -9,7 +9,4 @@ export class UpdateCycleDto {
   @IsOptional()
   @IsEnum(['pending', 'ongoing', 'completed'])
   status?: string;
-
-  @IsOptional()
-  allRoundsCompleted?: boolean;
 }

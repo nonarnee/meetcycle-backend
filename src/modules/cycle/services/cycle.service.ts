@@ -10,6 +10,7 @@ import { Model } from 'mongoose';
 import { UpdateCycleDto } from '../dtos/update-cycle.dto';
 import { RoundService } from 'src/modules/round/services/round.service';
 import { MeetingDocument } from 'src/modules/meeting/schemas/meeting.schema';
+import { add } from 'date-fns';
 
 @Injectable()
 export class CycleService {
@@ -51,7 +52,9 @@ export class CycleService {
         meeting: targetMeeting._id,
         order,
         status: 'pending',
-        allRoundsCompleted: false,
+        endTime: add(new Date(), {
+          minutes: targetMeeting.roundDurationMinutes,
+        }),
       });
       cycle = await cycle.save();
     }
@@ -87,22 +90,13 @@ export class CycleService {
       .exec();
   }
 
-  async setAllRoundsCompleted(
-    id: string,
-    completed: boolean,
-  ): Promise<Cycle | null> {
-    return this.cycleModel
-      .findByIdAndUpdate(id, { allRoundsCompleted: completed }, { new: true })
-      .exec();
-  }
-
   async completeCycle(
     meetingId: string,
     cycleOrder: number,
   ): Promise<CycleDocument> {
     const cycle = await this.cycleModel.findOne({
       meeting: meetingId,
-      cycleOrder: cycleOrder,
+      order: cycleOrder,
     });
 
     if (!cycle) throw new NotFoundException('Cycle not found');

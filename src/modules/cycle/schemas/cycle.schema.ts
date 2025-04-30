@@ -14,8 +14,8 @@ export class Cycle {
   @Prop({ default: 'pending', enum: ['pending', 'ongoing', 'completed'] })
   status: string;
 
-  @Prop({ default: false })
-  allRoundsCompleted: boolean;
+  @Prop({ default: null })
+  endTime: Date;
 }
 
 export const CycleSchema = SchemaFactory.createForClass(Cycle);

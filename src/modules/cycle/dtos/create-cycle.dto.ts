@@ -6,6 +6,7 @@ import {
   IsEnum,
   Min,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateCycleDto {
   @IsNotEmpty()
@@ -21,6 +22,7 @@ export class CreateCycleDto {
   @IsEnum(['pending', 'ongoing', 'completed'])
   status?: string = 'pending';
 
-  @IsOptional()
-  allRoundsCompleted?: boolean = false;
+  @IsString()
+  @Transform(({ value }: { value: string }) => new Date(value))
+  endTime: Date;
 }

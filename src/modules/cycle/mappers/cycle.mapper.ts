@@ -8,7 +8,7 @@ export class CycleMapper {
       meeting: new Types.ObjectId(createCycleDto.meeting),
       order: createCycleDto.order,
       status: createCycleDto.status || 'pending',
-      allRoundsCompleted: createCycleDto.allRoundsCompleted || false,
+      endTime: createCycleDto.endTime,
     };
   }
 }

@@ -51,7 +51,28 @@ export class MeetingService {
     return MeetingMapper.toDetailResponse(meeting);
   }
 
-  async getCurrentRooms(id: string) {
+  async findCurrentCycle(meetingId: string) {
+    const meeting = await this.meetingModel
+      .findById(new Types.ObjectId(meetingId))
+      .exec();
+
+    if (!meeting) {
+      throw new BadRequestException('Meeting not found');
+    }
+
+    const currentCycle = await this.cycleService.findByMeetingAndOrder(
+      meeting._id.toString(),
+      meeting.currentCycleOrder,
+    );
+
+    if (!currentCycle) {
+      throw new BadRequestException('Current cycle not found');
+    }
+
+    return currentCycle;
+  }
+
+  async findCurrentRooms(id: string) {
     const meeting = await this.meetingModel
       .findById(new Types.ObjectId(id))
       .exec();
@@ -193,6 +214,34 @@ export class MeetingService {
 
     // 미팅 상태 변경
     meeting.status = 'cancelled';
+    return meeting.save();
+  }
+
+  async advanceToNextCycle(meetingId: string): Promise<MeetingDocument> {
+    const meeting = await this.meetingModel.findById(meetingId);
+    if (!meeting) throw new NotFoundException('미팅을 찾을 수 없습니다');
+
+    if (meeting.status !== 'ongoing') {
+      throw new BadRequestException('진행 중인 미팅이 아닙니다');
+    }
+
+    // 현재 사이클 완료 처리
+    await this.cycleService.completeCycle(meetingId, meeting.currentCycleOrder);
+
+    // 다음 사이클 번호 계산
+    const nextCycleOrder = meeting.currentCycleOrder + 1;
+
+    // 모든 사이클이 완료되었는지 확인
+    if (nextCycleOrder >= meeting.totalCycles) {
+      meeting.status = 'completed';
+      return meeting.save();
+    }
+
+    // 다음 사이클 생성 및 시작
+    await this.cycleService.create(meeting, nextCycleOrder);
+
+    // 미팅 정보 업데이트
+    meeting.currentCycleOrder = nextCycleOrder;
     return meeting.save();
   }
 

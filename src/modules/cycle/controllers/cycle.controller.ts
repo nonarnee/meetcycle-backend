@@ -48,12 +48,4 @@ export class CycleController {
   ): Promise<Cycle | null> {
     return this.cycleService.updateStatus(id, status);
   }
-
-  @Put(':id/complete')
-  setAllRoundsCompleted(
-    @Param('id') id: string,
-    @Body('completed') completed: boolean,
-  ): Promise<Cycle | null> {
-    return this.cycleService.setAllRoundsCompleted(id, completed);
-  }
 }
