@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 
-export type RoundDocument = Round & Document<Types.ObjectId>;
+export type RoomDocument = Room & Document<Types.ObjectId>;
 
 @Schema({ timestamps: true })
-export class Round {
+export class Room {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Cycle', required: true })
   cycle: Types.ObjectId;
 
@@ -35,4 +35,4 @@ export class Round {
   isMatched: boolean;
 }
 
-export const RoundSchema = SchemaFactory.createForClass(Round);
+export const RoomSchema = SchemaFactory.createForClass(Room);

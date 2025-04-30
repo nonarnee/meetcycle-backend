@@ -1,7 +1,7 @@
 import { IsOptional, IsEnum, IsBoolean, IsDate } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class UpdateRoundDto {
+export class UpdateRoomDto {
   @IsOptional()
   @IsEnum(['pending', 'ongoing', 'completed'])
   status?: string;

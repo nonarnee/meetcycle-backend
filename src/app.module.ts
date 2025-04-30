@@ -6,7 +6,7 @@ import { AppService } from './app.service';
 import { getMongooseConfig } from './config/mongoose.config';
 import { UserModule } from './modules/user/user.module';
 import { MeetingModule } from './modules/meeting/meeting.module';
-import { RoundModule } from './modules/round/round.module';
+import { RoomModule } from './modules/room/room.module';
 import { ParticipantModule } from './modules/participant/participant.module';
 import { CycleModule } from './modules/cycle/cycle.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -27,7 +27,7 @@ import { AuthModule } from './modules/auth/auth.module';
     }),
     UserModule,
     MeetingModule,
-    RoundModule,
+    RoomModule,
     ParticipantModule,
     CycleModule,
     AuthModule,

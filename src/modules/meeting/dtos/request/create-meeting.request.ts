@@ -44,5 +44,5 @@ export class CreateMeetingDto {
 
   @IsNumber()
   @Min(1)
-  roundDurationMinutes: number;
+  roomDurationMinutes: number;
 }

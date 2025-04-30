@@ -36,7 +36,7 @@ export class Meeting {
   status: string;
 
   @Prop({ default: 10 })
-  roundDurationMinutes: number;
+  roomDurationMinutes: number;
 
   @Prop({ default: 0 })
   totalCycles: number;

@@ -6,7 +6,7 @@ import { MeetingService } from './services/meeting.service';
 import { CycleModule } from 'src/modules/cycle/cycle.module';
 import { UserModule } from 'src/modules/user/user.module';
 import { ParticipantModule } from 'src/modules/participant/participant.module';
-import { RoundModule } from 'src/modules/round/round.module';
+import { RoomModule } from 'src/modules/room/room.module';
 import { AuthModule } from 'src/modules/auth/auth.module';
 
 @Module({
@@ -16,7 +16,7 @@ import { AuthModule } from 'src/modules/auth/auth.module';
     CycleModule,
     UserModule,
     ParticipantModule,
-    RoundModule,
+    RoomModule,
   ],
   controllers: [MeetingController],
   providers: [MeetingService],

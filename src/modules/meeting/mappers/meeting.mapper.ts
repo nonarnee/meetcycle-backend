@@ -32,7 +32,7 @@ export class MeetingMapper {
       status: 'pending',
       totalCycles,
       currentCycleOrder: 0,
-      roundDurationMinutes: createMeetingDto.roundDurationMinutes,
+      roomDurationMinutes: createMeetingDto.roomDurationMinutes,
     };
   }
 
@@ -45,7 +45,7 @@ export class MeetingMapper {
       femaleCount: meeting.femaleCount,
       location: meeting.location,
       dateTime: meeting.dateTime,
-      roundDurationMinutes: meeting.roundDurationMinutes,
+      roomDurationMinutes: meeting.roomDurationMinutes,
     };
   }
 
@@ -58,7 +58,7 @@ export class MeetingMapper {
       femaleCount: meeting.femaleCount,
       location: meeting.location,
       dateTime: meeting.dateTime,
-      roundDurationMinutes: meeting.roundDurationMinutes,
+      roomDurationMinutes: meeting.roomDurationMinutes,
       totalCycles: meeting.totalCycles,
       currentCycleOrder: meeting.currentCycleOrder,
       status: meeting.status,

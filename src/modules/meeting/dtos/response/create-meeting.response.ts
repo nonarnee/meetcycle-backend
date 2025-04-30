@@ -31,5 +31,5 @@ export class CreateMeetingResponse {
 
   @IsNotEmpty()
   @IsNumber()
-  roundDurationMinutes: number;
+  roomDurationMinutes: number;
 }

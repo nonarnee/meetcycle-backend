@@ -39,7 +39,7 @@ export class MeetingResponse {
 
   @IsNotEmpty()
   @IsNumber()
-  roundDurationMinutes: number;
+  roomDurationMinutes: number;
 
   @IsNotEmpty()
   @IsNumber()

@@ -41,7 +41,7 @@ export class UpdateMeetingDto {
   @IsOptional()
   @IsNumber()
   @Min(1)
-  roundDurationMinutes?: number;
+  roomDurationMinutes?: number;
 
   @IsOptional()
   @IsNumber()

@@ -8,7 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { CycleDocument } from '../schemas/cycle.schema';
 import { Model } from 'mongoose';
 import { UpdateCycleDto } from '../dtos/update-cycle.dto';
-import { RoundService } from 'src/modules/round/services/round.service';
+import { RoomService } from 'src/modules/room/services/room.service';
 import { MeetingDocument } from 'src/modules/meeting/schemas/meeting.schema';
 import { add } from 'date-fns';
 
@@ -16,7 +16,7 @@ import { add } from 'date-fns';
 export class CycleService {
   constructor(
     @InjectModel(Cycle.name) private cycleModel: Model<CycleDocument>,
-    private roundService: RoundService,
+    private roomService: RoomService,
   ) {}
 
   async findAll(): Promise<Cycle[]> {
@@ -53,16 +53,16 @@ export class CycleService {
         order,
         status: 'pending',
         endTime: add(new Date(), {
-          minutes: targetMeeting.roundDurationMinutes,
+          minutes: targetMeeting.roomDurationMinutes,
         }),
       });
       cycle = await cycle.save();
     }
 
-    const createdRounds = await this.roundService.create(targetMeeting, cycle);
+    const createdRooms = await this.roomService.create(targetMeeting, cycle);
 
-    if (!createdRounds) {
-      throw new BadRequestException('Failed to create rounds');
+    if (!createdRooms) {
+      throw new BadRequestException('Failed to create rooms');
     }
 
     cycle.status = 'ongoing';
@@ -102,7 +102,7 @@ export class CycleService {
     if (!cycle) throw new NotFoundException('Cycle not found');
 
     // 모든 방 완료 처리
-    await this.roundService.updateAllStatus(cycle._id, 'completed');
+    await this.roomService.updateAllStatus(cycle._id, 'completed');
 
     // 사이클 완료 처리
     cycle.status = 'completed';

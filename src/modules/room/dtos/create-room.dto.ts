@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class CreateRoundDto {
+export class CreateRoomDto {
   @IsNotEmpty()
   @IsString()
   cycle: string; // Cycle ID (ObjectId)

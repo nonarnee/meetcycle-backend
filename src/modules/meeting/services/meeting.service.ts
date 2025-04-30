@@ -15,8 +15,9 @@ import { MeetingPopulated } from 'src/common/types/populated/meeting-populated.t
 import { MeetingResponse } from '../dtos/response/meeting.response';
 import { ParticipantService } from 'src/modules/participant/services/participant.service';
 import { CycleService } from 'src/modules/cycle/services/cycle.service';
-import { RoundService } from 'src/modules/round/services/round.service';
+import { RoomService } from 'src/modules/room/services/room.service';
 import { ParticipantDocument } from 'src/modules/participant/schemas/participant.schema';
+
 @Injectable()
 export class MeetingService {
   constructor(
@@ -24,7 +25,7 @@ export class MeetingService {
     private userService: UserService,
     private participantService: ParticipantService,
     private cycleService: CycleService,
-    private roundService: RoundService,
+    private roomService: RoomService,
   ) {}
 
   async findAll(): Promise<Meeting[]> {
@@ -109,7 +110,7 @@ export class MeetingService {
       throw new NotFoundException('Current cycle not found');
     }
 
-    return await this.roundService.findByCycle(currentCycle);
+    return await this.roomService.findByCycle(currentCycle);
   }
 
   async create(createMeetingDto: CreateMeetingDto) {

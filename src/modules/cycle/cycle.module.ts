@@ -3,12 +3,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Cycle, CycleSchema } from './schemas/cycle.schema';
 import { CycleController } from './controllers/cycle.controller';
 import { CycleService } from './services/cycle.service';
-import { RoundModule } from '../round/round.module';
+import { RoomModule } from '../room/room.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Cycle.name, schema: CycleSchema }]),
-    RoundModule,
+    RoomModule,
   ],
   controllers: [CycleController],
   providers: [CycleService],
