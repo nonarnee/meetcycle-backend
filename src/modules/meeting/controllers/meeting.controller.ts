@@ -46,6 +46,12 @@ export class MeetingController {
     return this.meetingService.findCurrentCycle(id);
   }
 
+  @Get('participant/:participantId')
+  @Public()
+  findByParticipantId(@Param('participantId') participantId: string) {
+    return this.meetingService.findByParticipantId(participantId);
+  }
+
   @Get(':id/rooms/current')
   @Roles(UserRole.ADMIN, UserRole.HOST)
   getCurrentRooms(@Param('id') id: string) {

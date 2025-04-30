@@ -72,6 +72,25 @@ export class MeetingService {
     return currentCycle;
   }
 
+  async findByParticipantId(participantId: string) {
+    const participant = await this.participantService.findOne(participantId);
+
+    if (!participant) {
+      throw new NotFoundException('Participant not found');
+    }
+
+    const meeting = await this.meetingModel
+      .findById(participant.meeting)
+      .lean()
+      .exec();
+
+    if (!meeting) {
+      throw new NotFoundException('미팅을 찾을 수 없습니다');
+    }
+
+    return meeting;
+  }
+
   async findCurrentRooms(id: string) {
     const meeting = await this.meetingModel
       .findById(new Types.ObjectId(id))
@@ -134,8 +153,10 @@ export class MeetingService {
 
     this.validateParticipantLimit(targetMeeting, createParticipantDto);
 
-    const createdParticipant =
-      await this.participantService.create(createParticipantDto);
+    const createdParticipant = await this.participantService.create(
+      createParticipantDto,
+      meetingId,
+    );
 
     const field =
       createParticipantDto.gender === 'male'

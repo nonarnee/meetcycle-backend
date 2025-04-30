@@ -30,8 +30,14 @@ export class ParticipantService {
 
   async create(
     createParticipantDto: CreateParticipantDto,
+    meetingId: string,
   ): Promise<ParticipantDocument> {
-    return await this.participantModel.create(createParticipantDto);
+    const participant = new this.participantModel({
+      ...createParticipantDto,
+      meeting: meetingId,
+    });
+
+    return await participant.save();
   }
 
   async update(

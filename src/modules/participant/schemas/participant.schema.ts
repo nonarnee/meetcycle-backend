@@ -26,6 +26,9 @@ export class Participant {
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', default: null })
   user: Types.ObjectId;
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Meeting', default: null })
+  meeting: Types.ObjectId;
 }
 
 export const ParticipantSchema = SchemaFactory.createForClass(Participant);
