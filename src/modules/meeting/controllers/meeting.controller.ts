@@ -19,9 +19,9 @@ import { CreateParticipantDto } from 'src/modules/participant/dtos/request/creat
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/modules/user/types/user-role.type';
 import { Public } from 'src/common/decorators/public.decorator';
-import { ParticipantPrivateResponse } from 'src/modules/participant/dtos/response/participant-private.response';
 import { AuthService } from 'src/modules/auth/services/auth.service';
 import { Response } from 'express';
+import { AuthResponse } from 'src/modules/auth/types/auth-response.type';
 
 @Controller('meetings')
 export class MeetingController {
@@ -94,8 +94,8 @@ export class MeetingController {
   async addParticipant(
     @Param('id') id: string,
     @Body() createParticipantDto: CreateParticipantDto,
-    @Res({ passthrough: true }) res: Response<ParticipantPrivateResponse>,
-  ): Promise<Meeting> {
+    @Res({ passthrough: true }) res: Response<AuthResponse>,
+  ): Promise<AuthResponse> {
     const createdParticipant = await this.meetingService.addParticipant(
       id,
       createParticipantDto,
@@ -111,7 +111,11 @@ export class MeetingController {
       this.authService.defaultCookieOptions,
     );
 
-    return this.meetingService.addParticipant(id, createParticipantDto);
+    return {
+      id: createdParticipant._id.toString(),
+      nickname: createdParticipant.nickname,
+      role: UserRole.PARTICIPANT,
+    };
   }
 
   @Delete(':id/participants/:userId')

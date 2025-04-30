@@ -14,15 +14,11 @@ import { ParticipantService } from '../services/participant.service';
 import { CreateParticipantDto } from '../dtos/request/create-participant.request';
 import { UpdateParticipantDto } from '../dtos/request/update-participant.request';
 import { Participant } from '../schemas/participant.schema';
-import { AuthService } from 'src/modules/auth/services/auth.service';
 import { ParticipantPrivateResponse } from '../dtos/response/participant-private.response';
 
 @Controller('participants')
 export class ParticipantController {
-  constructor(
-    private readonly participantService: ParticipantService,
-    private readonly authService: AuthService,
-  ) {}
+  constructor(private readonly participantService: ParticipantService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

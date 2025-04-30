@@ -16,7 +16,7 @@ import { MeetingResponse } from '../dtos/response/meeting.response';
 import { ParticipantService } from 'src/modules/participant/services/participant.service';
 import { CycleService } from 'src/modules/cycle/services/cycle.service';
 import { RoundService } from 'src/modules/round/services/round.service';
-
+import { ParticipantDocument } from 'src/modules/participant/schemas/participant.schema';
 @Injectable()
 export class MeetingService {
   constructor(
@@ -121,7 +121,7 @@ export class MeetingService {
   async addParticipant(
     meetingId: string,
     createParticipantDto: CreateParticipantDto,
-  ): Promise<MeetingDocument> {
+  ): Promise<ParticipantDocument> {
     const targetMeeting = await this.meetingModel.findById(meetingId).exec();
 
     if (!targetMeeting) {
@@ -143,8 +143,9 @@ export class MeetingService {
         : 'femaleParticipants';
 
     targetMeeting[field].push(createdParticipant._id);
+    await targetMeeting.save();
 
-    return await targetMeeting.save();
+    return createdParticipant;
   }
 
   async removeParticipant(
