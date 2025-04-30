@@ -11,12 +11,16 @@ import {
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { User } from '../schemas/user.schema';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { UserRole } from '../types/user-role.type';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
+  @Roles(UserRole.ADMIN)
   findAll(): Promise<User[]> {
     return this.userService.findAll();
   }
@@ -28,6 +32,7 @@ export class UserController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @Public()
   async create(
     @Body() user: Omit<User, 'role'>,
   ): Promise<Omit<User, 'password' | 'role'>> {
@@ -45,6 +50,7 @@ export class UserController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN)
   remove(@Param('id') id: string): Promise<User | null> {
     return this.userService.remove(id);
   }

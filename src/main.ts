@@ -1,6 +1,9 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
+import { RolesGuard } from './modules/auth/guards/roles.guard';
+import { JwtAuthGuard } from './modules/auth/guards/jwt.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -19,6 +22,13 @@ async function bootstrap() {
       transform: true, // 요청 값을 자동으로 DTO 타입으로 변환
     }),
   );
+
+  const reflector = app.get(Reflector);
+  app.useGlobalGuards(new JwtAuthGuard(reflector));
+  app.useGlobalGuards(new RolesGuard(reflector));
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  app.use(cookieParser());
 
   await app.listen(process.env.PORT ?? 3000);
 }

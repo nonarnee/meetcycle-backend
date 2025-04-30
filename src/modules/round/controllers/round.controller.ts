@@ -1,12 +1,15 @@
 import { Body, Controller, Delete, Get, Param, Put } from '@nestjs/common';
 import { RoundService } from '../services/round.service';
 import { Round } from '../schemas/round.schema';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { UserRole } from 'src/modules/user/types/user-role.type';
 
 @Controller('rounds')
 export class RoundController {
   constructor(private readonly roundService: RoundService) {}
 
   @Get()
+  @Roles(UserRole.ADMIN, UserRole.HOST)
   findAll(): Promise<Round[]> {
     return this.roundService.findAll();
   }
@@ -17,6 +20,7 @@ export class RoundController {
   }
 
   @Put(':id')
+  @Roles(UserRole.ADMIN, UserRole.HOST)
   update(
     @Param('id') id: string,
     @Body() round: Partial<Round>,
@@ -25,16 +29,19 @@ export class RoundController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN, UserRole.HOST)
   remove(@Param('id') id: string): Promise<Round | null> {
     return this.roundService.remove(id);
   }
 
   @Get('meeting/:meetingId')
+  @Roles(UserRole.ADMIN, UserRole.HOST)
   findByMeeting(@Param('meetingId') meetingId: string): Promise<Round[]> {
     return this.roundService.findByMeeting(meetingId);
   }
 
   @Get('participant/:userId')
+  @Roles(UserRole.ADMIN, UserRole.HOST)
   findByParticipant(@Param('userId') userId: string): Promise<Round[]> {
     return this.roundService.findByParticipant(userId);
   }

@@ -7,21 +7,41 @@ import {
   Delete,
   Put,
   Query,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ParticipantService } from '../services/participant.service';
 import { CreateParticipantDto } from '../dtos/request/create-participant.request';
 import { UpdateParticipantDto } from '../dtos/request/update-participant.request';
 import { Participant } from '../schemas/participant.schema';
+import { AuthService } from 'src/modules/auth/services/auth.service';
+import { ParticipantPrivateResponse } from '../dtos/response/participant-private.response';
 
 @Controller('participants')
 export class ParticipantController {
-  constructor(private readonly participantService: ParticipantService) {}
+  constructor(
+    private readonly participantService: ParticipantService,
+    private readonly authService: AuthService,
+  ) {}
 
   @Post()
-  create(
+  @HttpCode(HttpStatus.CREATED)
+  async create(
     @Body() createParticipantDto: CreateParticipantDto,
-  ): Promise<Participant> {
-    return this.participantService.create(createParticipantDto);
+  ): Promise<ParticipantPrivateResponse> {
+    const createdParticipant =
+      await this.participantService.create(createParticipantDto);
+
+    return {
+      id: createdParticipant._id.toString(),
+      nickname: createdParticipant.nickname,
+      gender: createdParticipant.gender,
+      age: createdParticipant.age,
+      job: createdParticipant.job,
+      comment: createdParticipant.comment,
+      phone: createdParticipant.phone,
+      userId: null,
+    };
   }
 
   @Get()

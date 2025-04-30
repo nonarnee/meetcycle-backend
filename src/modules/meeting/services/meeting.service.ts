@@ -121,7 +121,7 @@ export class MeetingService {
   async addParticipant(
     meetingId: string,
     createParticipantDto: CreateParticipantDto,
-  ): Promise<Meeting> {
+  ): Promise<MeetingDocument> {
     const targetMeeting = await this.meetingModel.findById(meetingId).exec();
 
     if (!targetMeeting) {
