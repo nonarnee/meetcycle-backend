@@ -48,6 +48,18 @@ export class MeetingController {
     return this.meetingService.findCurrentCycle(id);
   }
 
+  @Get(':id/current-evaluations')
+  @Roles(UserRole.ADMIN, UserRole.HOST)
+  findCurrentEvaluations(@Param('id') id: string) {
+    return this.meetingService.findCurrentEvaluations(id);
+  }
+
+  @Get(':id/participants')
+  @Roles(UserRole.ADMIN, UserRole.HOST)
+  findParticipants(@Param('id') id: string) {
+    return this.participantService.findByMeeting(id);
+  }
+
   @Get('participant/:participantId')
   @Public()
   findByParticipantId(@Param('participantId') participantId: string) {
@@ -56,7 +68,7 @@ export class MeetingController {
 
   @Get(':id/rooms/current')
   @Roles(UserRole.ADMIN, UserRole.HOST)
-  getCurrentRooms(@Param('id') id: string) {
+  findCurrentRooms(@Param('id') id: string) {
     return this.meetingService.findCurrentRooms(id);
   }
 
@@ -96,7 +108,7 @@ export class MeetingController {
     return this.meetingService.remove(id);
   }
 
-  @Post(':id/participants')
+  @Post(':id/participant')
   @HttpCode(HttpStatus.CREATED)
   @Public()
   async addParticipant(

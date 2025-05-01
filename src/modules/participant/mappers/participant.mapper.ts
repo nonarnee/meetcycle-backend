@@ -8,7 +8,7 @@ export class ParticipantMapper {
     participant: LeanDocument<Participant>,
   ): ParticipantPublicResponse {
     return {
-      id: participant._id.toString(),
+      _id: participant._id.toString(),
       nickname: participant.nickname,
       gender: participant.gender,
       age: participant.age,

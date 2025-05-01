@@ -1,12 +1,26 @@
-import { IsString, IsOptional, IsNumber, Min } from 'class-validator';
-import { Transform } from 'class-transformer';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  Min,
+  IsMongoId,
+} from 'class-validator';
+
 import { Gender } from 'src/common/types/gender.type';
+import { Types } from 'mongoose';
 
 export class UpdateParticipantDto {
   @IsOptional()
+  @IsMongoId()
+  meeting?: Types.ObjectId;
+
+  @IsOptional()
+  @IsMongoId()
+  room?: Types.ObjectId;
+
+  @IsOptional()
   @IsString()
-  @Transform(({ value }: { value: string }) => value?.trim())
-  name?: string;
+  nickname?: string;
 
   @IsOptional()
   gender?: Gender;
@@ -18,11 +32,13 @@ export class UpdateParticipantDto {
 
   @IsOptional()
   @IsString()
-  @Transform(({ value }: { value: string }) => value?.trim())
   job?: string;
 
   @IsOptional()
   @IsString()
-  @Transform(({ value }: { value: string }) => value?.trim())
   comment?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
 }

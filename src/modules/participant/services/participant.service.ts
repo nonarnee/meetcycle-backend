@@ -46,9 +46,9 @@ export class ParticipantService {
 
   async update(
     id: string,
-    updateParticipantDto: UpdateParticipantDto,
+    updateParticipantDto: Partial<UpdateParticipantDto>,
   ): Promise<Participant | null> {
-    return this.participantModel
+    return await this.participantModel
       .findByIdAndUpdate(id, updateParticipantDto, { new: true })
       .exec();
   }

@@ -1,19 +1,22 @@
 import { Schema } from '@nestjs/mongoose';
+import { Prop, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 
-import { Prop } from '@nestjs/mongoose';
-import mongoose from 'mongoose';
+export type EvaluationDocument = Evaluation & Document<Types.ObjectId>;
 
-@Schema()
+@Schema({ timestamps: true })
 export class Evaluation {
-  @Prop({ type: mongoose.Types.ObjectId, ref: 'Room' })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Room' })
   roomId: string;
 
-  @Prop({ type: mongoose.Types.ObjectId, ref: 'Participant' })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Participant' })
   from: string;
 
-  @Prop({ type: mongoose.Types.ObjectId, ref: 'Participant' })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Participant' })
   to: string;
 
   @Prop()
   result: boolean;
 }
+
+export const EvaluationSchema = SchemaFactory.createForClass(Evaluation);

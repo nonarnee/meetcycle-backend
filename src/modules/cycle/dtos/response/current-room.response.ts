@@ -6,4 +6,6 @@ export class CurrentRoomResponse {
   order: number;
   endTime: Date;
   partner: ParticipantPublicResponse;
+  me: ParticipantPublicResponse;
+  result: boolean | null;
 }

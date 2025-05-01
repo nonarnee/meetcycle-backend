@@ -8,6 +8,8 @@ import { RoomService } from 'src/modules/room/services/room.service';
 import { MeetingDocument } from 'src/modules/meeting/schemas/meeting.schema';
 import { add } from 'date-fns';
 import { ParticipantService } from 'src/modules/participant/services/participant.service';
+import { EvaluationService } from 'src/modules/evaluation/evaluation.service';
+import { LeanDocument } from 'src/common/types/lean.type';
 
 @Injectable()
 export class CycleService {
@@ -15,14 +17,19 @@ export class CycleService {
     @InjectModel(Cycle.name) private cycleModel: Model<CycleDocument>,
     private roomService: RoomService,
     private participantService: ParticipantService,
+    private evaluationService: EvaluationService,
   ) {}
 
   async findAll(): Promise<Cycle[]> {
-    return this.cycleModel.find().populate('meeting').exec();
+    return this.cycleModel
+      .find()
+      .populate('meeting', { lean: true })
+      .lean()
+      .exec();
   }
 
-  async findOne(id: string): Promise<Cycle | null> {
-    return this.cycleModel.findById(id).populate('meeting').exec();
+  async findOne(id: string): Promise<LeanDocument<Cycle> | null> {
+    return this.cycleModel.findById(id).populate('meeting').lean().exec();
   }
 
   async findByMeeting(meetingId: string): Promise<Cycle[]> {
@@ -33,7 +40,7 @@ export class CycleService {
     meetingId: string,
     order: number,
   ): Promise<CycleDocument | null> {
-    return this.cycleModel.findOne({ meeting: meetingId, order }).exec();
+    return this.cycleModel.findOne({ meeting: meetingId, order }).lean().exec();
   }
 
   async findCurrentByParticipantId(participantId: string) {
@@ -41,20 +48,26 @@ export class CycleService {
     if (!participant) throw new NotFoundException('Participant not found');
 
     const room = await this.roomService.findOneByParticipant(participantId);
-
     if (!room) throw new NotFoundException('Room not found');
 
-    const cycle = await this.cycleModel.findOne({
-      $or: [{ room: room._id }],
-    });
-
+    const cycle = await this.findOne(room.cycle._id.toString());
     if (!cycle) throw new NotFoundException('Cycle not found');
 
+    const evaluation = await this.evaluationService.findOneByParticipantAndRoom(
+      participantId,
+      room._id.toString(),
+    );
+
+    const {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      phone: partnerPhone,
+      _id: partnerId,
+      ...partner
+    } = participant.gender === 'male'
+      ? room.femaleParticipant
+      : room.maleParticipant;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { phone, _id, ...partner } =
-      participant.gender === 'male'
-        ? room.femaleParticipant
-        : room.maleParticipant;
+    const { phone: myPhone, _id: myId, ...me } = participant;
 
     return {
       cycleId: cycle._id.toString(),
@@ -63,8 +76,13 @@ export class CycleService {
       endTime: cycle.endTime,
       partner: {
         ...partner,
-        id: _id.toString(),
+        _id: partnerId.toString(),
       },
+      me: {
+        ...me,
+        _id: myId.toString(),
+      },
+      result: evaluation ? evaluation.result : null,
     };
   }
 

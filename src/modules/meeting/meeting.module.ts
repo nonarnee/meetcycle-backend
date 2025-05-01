@@ -8,6 +8,7 @@ import { UserModule } from 'src/modules/user/user.module';
 import { ParticipantModule } from 'src/modules/participant/participant.module';
 import { RoomModule } from 'src/modules/room/room.module';
 import { AuthModule } from 'src/modules/auth/auth.module';
+import { EvaluationModule } from 'src/modules/evaluation/evaluation.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { AuthModule } from 'src/modules/auth/auth.module';
     UserModule,
     ParticipantModule,
     RoomModule,
+    EvaluationModule,
   ],
   controllers: [MeetingController],
   providers: [MeetingService],

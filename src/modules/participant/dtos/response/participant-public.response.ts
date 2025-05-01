@@ -3,7 +3,7 @@ import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 export class ParticipantPublicResponse {
   @IsNotEmpty()
   @IsString()
-  id: string;
+  _id: string;
 
   @IsNotEmpty()
   @IsString()

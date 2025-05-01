@@ -102,23 +102,4 @@ export class RoomService {
       .populate('femaleParticipant')
       .exec();
   }
-
-  private computeOptimalMatching(
-    males: Types.ObjectId[],
-    females: Types.ObjectId[],
-    cycleOrder: number,
-    totalCycles: number,
-  ): Array<{ male: Types.ObjectId; female: Types.ObjectId }> {
-    const matches: { male: Types.ObjectId; female: Types.ObjectId }[] = [];
-
-    for (let maleIndex = 0; maleIndex < totalCycles; maleIndex++) {
-      const femaleIndex = (maleIndex + cycleOrder) % totalCycles;
-      matches.push({
-        male: males[maleIndex],
-        female: females[femaleIndex],
-      });
-    }
-
-    return matches;
-  }
 }

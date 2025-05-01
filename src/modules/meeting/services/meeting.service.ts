@@ -14,6 +14,7 @@ import { ParticipantService } from 'src/modules/participant/services/participant
 import { CycleService } from 'src/modules/cycle/services/cycle.service';
 import { RoomService } from 'src/modules/room/services/room.service';
 import { LeanDocument } from 'src/common/types/lean.type';
+import { EvaluationService } from 'src/modules/evaluation/evaluation.service';
 
 @Injectable()
 export class MeetingService {
@@ -23,6 +24,7 @@ export class MeetingService {
     private participantService: ParticipantService,
     private cycleService: CycleService,
     private roomService: RoomService,
+    private evaluationService: EvaluationService,
   ) {}
 
   async findAll(): Promise<Meeting[]> {
@@ -31,27 +33,6 @@ export class MeetingService {
 
   async findOne(id: string): Promise<LeanDocument<Meeting> | null> {
     return await this.meetingModel.findById(id).lean().exec();
-  }
-
-  async findCurrentCycle(meetingId: string) {
-    const meeting = await this.meetingModel
-      .findById(new Types.ObjectId(meetingId))
-      .exec();
-
-    if (!meeting) {
-      throw new BadRequestException('Meeting not found');
-    }
-
-    const currentCycle = await this.cycleService.findByMeetingAndOrder(
-      meeting._id.toString(),
-      meeting.currentCycleOrder,
-    );
-
-    if (!currentCycle) {
-      throw new BadRequestException('Current cycle not found');
-    }
-
-    return currentCycle;
   }
 
   async findByParticipantId(participantId: string) {
@@ -71,6 +52,37 @@ export class MeetingService {
     }
 
     return meeting;
+  }
+
+  async findCurrentCycle(meetingId: string) {
+    const meeting = await this.meetingModel
+      .findById(new Types.ObjectId(meetingId))
+      .exec();
+
+    if (!meeting) {
+      throw new BadRequestException('Meeting not found');
+    }
+
+    return await this.cycleService.findByMeetingAndOrder(
+      meeting._id.toString(),
+      meeting.currentCycleOrder,
+    );
+  }
+
+  async findCurrentEvaluations(meetingId: string) {
+    const meeting = await this.meetingModel
+      .findById(new Types.ObjectId(meetingId))
+      .exec();
+
+    if (!meeting) {
+      throw new NotFoundException('Meeting not found');
+    }
+
+    const currentRooms = await this.findCurrentRooms(meetingId);
+
+    return await this.evaluationService.findByRooms(
+      currentRooms.map((room) => room._id.toString()),
+    );
   }
 
   async findCurrentRooms(id: string) {
@@ -129,13 +141,12 @@ export class MeetingService {
       throw new BadRequestException('Meeting is not pending');
     }
 
+    targetMeeting.status = 'ongoing';
+    await targetMeeting.save();
+
     await this.cycleService.create(targetMeeting, 0);
 
-    targetMeeting.status = 'ongoing';
-    targetMeeting.currentCycleOrder = 0;
-    const updatedMeeting = await targetMeeting.save();
-
-    return updatedMeeting;
+    return await this.advanceToNextCycle(id);
   }
 
   async cancel(meetingId: string): Promise<MeetingDocument> {
@@ -159,17 +170,11 @@ export class MeetingService {
     // 다음 사이클 번호 계산
     const nextCycleOrder = meeting.currentCycleOrder + 1;
 
-    // 모든 사이클이 완료되었는지 확인
-    if (nextCycleOrder >= totalCycles) {
+    // 마지막 사이클인지 확인
+    if (nextCycleOrder > totalCycles) {
       meeting.status = 'completed';
       return meeting.save();
     }
-
-    // 다음 사이클 생성 및 시작
-    const createdCycle = await this.cycleService.create(
-      meeting,
-      nextCycleOrder,
-    );
 
     const participants = await this.participantService.findByMeeting(meetingId);
     const maleParticipants = participants.filter(
@@ -186,14 +191,31 @@ export class MeetingService {
       totalCycles,
     );
 
+    // 다음 사이클 생성
+    const createdCycle = await this.cycleService.create(
+      meeting,
+      nextCycleOrder,
+    );
+
     await Promise.all(
-      pairs.map(({ male, female }) =>
-        this.roomService.create({
+      pairs.map(async ({ male, female }) => {
+        const createdRoom = await this.roomService.create({
           cycle: createdCycle._id,
           maleParticipant: male._id,
           femaleParticipant: female._id,
-        }),
-      ),
+        });
+
+        await Promise.all([
+          this.participantService.update(male._id.toString(), {
+            room: createdRoom._id,
+          }),
+          this.participantService.update(female._id.toString(), {
+            room: createdRoom._id,
+          }),
+        ]);
+
+        return;
+      }),
     );
 
     // 미팅 정보 업데이트
