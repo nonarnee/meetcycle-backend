@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Cycle } from '../schemas/cycle.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { CycleDocument } from '../schemas/cycle.schema';
@@ -11,12 +7,14 @@ import { UpdateCycleDto } from '../dtos/update-cycle.dto';
 import { RoomService } from 'src/modules/room/services/room.service';
 import { MeetingDocument } from 'src/modules/meeting/schemas/meeting.schema';
 import { add } from 'date-fns';
+import { ParticipantService } from 'src/modules/participant/services/participant.service';
 
 @Injectable()
 export class CycleService {
   constructor(
     @InjectModel(Cycle.name) private cycleModel: Model<CycleDocument>,
     private roomService: RoomService,
+    private participantService: ParticipantService,
   ) {}
 
   async findAll(): Promise<Cycle[]> {
@@ -38,6 +36,38 @@ export class CycleService {
     return this.cycleModel.findOne({ meeting: meetingId, order }).exec();
   }
 
+  async findCurrentByParticipantId(participantId: string) {
+    const participant = await this.participantService.findOne(participantId);
+    if (!participant) throw new NotFoundException('Participant not found');
+
+    const room = await this.roomService.findOneByParticipant(participantId);
+
+    if (!room) throw new NotFoundException('Room not found');
+
+    const cycle = await this.cycleModel.findOne({
+      $or: [{ room: room._id }],
+    });
+
+    if (!cycle) throw new NotFoundException('Cycle not found');
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { phone, _id, ...partner } =
+      participant.gender === 'male'
+        ? room.femaleParticipant
+        : room.maleParticipant;
+
+    return {
+      cycleId: cycle._id.toString(),
+      roomId: room._id.toString(),
+      order: cycle.order,
+      endTime: cycle.endTime,
+      partner: {
+        ...partner,
+        id: _id.toString(),
+      },
+    };
+  }
+
   async create(
     targetMeeting: MeetingDocument,
     order: number,
@@ -51,7 +81,6 @@ export class CycleService {
       cycle = new this.cycleModel({
         meeting: targetMeeting._id,
         order,
-        status: 'pending',
         endTime: add(new Date(), {
           minutes: targetMeeting.roomDurationMinutes,
         }),
@@ -59,16 +88,7 @@ export class CycleService {
       cycle = await cycle.save();
     }
 
-    const createdRooms = await this.roomService.create(targetMeeting, cycle);
-
-    if (!createdRooms) {
-      throw new BadRequestException('Failed to create rooms');
-    }
-
-    cycle.status = 'ongoing';
-    const updatedCycle = await cycle.save();
-
-    return updatedCycle;
+    return cycle;
   }
 
   async update(
@@ -88,25 +108,5 @@ export class CycleService {
     return this.cycleModel
       .findByIdAndUpdate(id, { status }, { new: true })
       .exec();
-  }
-
-  async completeCycle(
-    meetingId: string,
-    cycleOrder: number,
-  ): Promise<CycleDocument> {
-    const cycle = await this.cycleModel.findOne({
-      meeting: meetingId,
-      order: cycleOrder,
-    });
-
-    if (!cycle) throw new NotFoundException('Cycle not found');
-
-    // 모든 방 완료 처리
-    await this.roomService.updateAllStatus(cycle._id, 'completed');
-
-    // 사이클 완료 처리
-    cycle.status = 'completed';
-
-    return cycle.save();
   }
 }

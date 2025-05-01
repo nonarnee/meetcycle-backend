@@ -6,6 +6,12 @@ export type ParticipantDocument = Participant & Document<Types.ObjectId>;
 
 @Schema({ timestamps: true })
 export class Participant {
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Meeting', default: null })
+  meeting: Types.ObjectId;
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Room', default: null })
+  room: Types.ObjectId;
+
   @Prop({ required: true })
   nickname: string;
 
@@ -26,9 +32,6 @@ export class Participant {
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', default: null })
   user: Types.ObjectId;
-
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Meeting', default: null })
-  meeting: Types.ObjectId;
 }
 
 export const ParticipantSchema = SchemaFactory.createForClass(Participant);

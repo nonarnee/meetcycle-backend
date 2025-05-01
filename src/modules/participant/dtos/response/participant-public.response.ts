@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class ParticipantPublicResponse {
   @IsNotEmpty()
@@ -24,8 +24,4 @@ export class ParticipantPublicResponse {
   @IsNotEmpty()
   @IsString()
   comment: string;
-
-  @IsOptional()
-  @IsString()
-  userId: string | null;
 }

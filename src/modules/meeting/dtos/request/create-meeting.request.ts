@@ -1,20 +1,13 @@
-import {
-  IsString,
-  IsNotEmpty,
-  IsArray,
-  IsNumber,
-  IsOptional,
-  Min,
-} from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, Min } from 'class-validator';
 
 export class CreateMeetingDto {
   @IsNotEmpty()
   @IsString()
-  title: string;
+  hostId: string;
 
   @IsNotEmpty()
   @IsString()
-  hostId: string;
+  title: string;
 
   @IsNotEmpty()
   @IsNumber()
@@ -23,16 +16,6 @@ export class CreateMeetingDto {
   @IsNotEmpty()
   @IsNumber()
   femaleCount: number;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  maleParticipants?: string[] = []; // Participant ID 배열
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  femaleParticipants?: string[] = []; // Participant ID 배열
 
   @IsNotEmpty()
   @IsString()

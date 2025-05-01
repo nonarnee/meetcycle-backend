@@ -45,13 +45,4 @@ export class RoomController {
   findByParticipant(@Param('userId') userId: string): Promise<Room[]> {
     return this.roomService.findByParticipant(userId);
   }
-
-  @Put(':id/like')
-  updateLiked(
-    @Param('id') id: string,
-    @Body('gender') gender: 'male' | 'female',
-    @Body('liked') liked: boolean,
-  ): Promise<Room | null> {
-    return this.roomService.updateLiked(id, gender, liked);
-  }
 }

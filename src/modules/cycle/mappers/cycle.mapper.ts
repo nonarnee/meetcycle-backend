@@ -7,7 +7,6 @@ export class CycleMapper {
     return {
       meeting: new Types.ObjectId(createCycleDto.meeting),
       order: createCycleDto.order,
-      status: createCycleDto.status || 'pending',
       endTime: createCycleDto.endTime,
     };
   }

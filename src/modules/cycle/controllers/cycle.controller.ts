@@ -12,7 +12,7 @@ import { UpdateCycleDto } from '../dtos/update-cycle.dto';
 import { Cycle } from '../schemas/cycle.schema';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/modules/user/types/user-role.type';
-
+import { CurrentRoomResponse } from '../dtos/response/current-room.response';
 @Controller('cycles')
 export class CycleController {
   constructor(private readonly cycleService: CycleService) {}
@@ -30,6 +30,13 @@ export class CycleController {
   @Roles(UserRole.ADMIN, UserRole.HOST)
   findOne(@Param('id') id: string): Promise<Cycle | null> {
     return this.cycleService.findOne(id);
+  }
+
+  @Get('participant/:participantId/current')
+  findCurrentByParticipantId(
+    @Param('participantId') participantId: string,
+  ): Promise<CurrentRoomResponse> {
+    return this.cycleService.findCurrentByParticipantId(participantId);
   }
 
   @Put(':id')

@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Room, RoomDocument } from '../schemas/room.schema';
-import { Gender } from 'src/common/types/gender.type';
-import { MeetingDocument } from 'src/modules/meeting/schemas/meeting.schema';
-import { CycleDocument } from 'src/modules/cycle/schemas/cycle.schema';
-
+import { Cycle, CycleDocument } from 'src/modules/cycle/schemas/cycle.schema';
+import { LeanDocument } from 'src/common/types/lean.type';
+import { Participant } from 'src/modules/participant/schemas/participant.schema';
+import { PopulatedRoom } from '../interfaces/populated-room.interface';
 @Injectable()
 export class RoomService {
   constructor(@InjectModel(Room.name) private roomModel: Model<RoomDocument>) {}
@@ -43,28 +43,26 @@ export class RoomService {
       .exec();
   }
 
-  async create(meeting: MeetingDocument, cycle: CycleDocument) {
-    const maleParticipants = meeting.maleParticipants;
-    const femaleParticipants = meeting.femaleParticipants;
+  async findOneByParticipant(
+    participantId: string,
+  ): Promise<PopulatedRoom | null> {
+    return this.roomModel
+      .findOne({
+        $or: [
+          { maleParticipant: participantId },
+          { femaleParticipant: participantId },
+        ],
+      })
+      .sort({ createdAt: -1 })
+      .populate<LeanDocument<Cycle>>('cycle')
+      .populate<LeanDocument<Participant>>('maleParticipant')
+      .populate<LeanDocument<Participant>>('femaleParticipant')
+      .lean<PopulatedRoom>()
+      .exec();
+  }
 
-    const matches = this.computeOptimalMatching(
-      maleParticipants,
-      femaleParticipants,
-      cycle.order,
-      meeting.totalCycles,
-    );
-
-    const roomPromises = matches.map((match, index) => {
-      return this.roomModel.create({
-        cycle: cycle._id,
-        roomNumber: index + 1,
-        maleParticipant: match.male,
-        femaleParticipant: match.female,
-        status: 'ongoing',
-      });
-    });
-
-    return await Promise.all(roomPromises);
+  async create(room: Room) {
+    return await this.roomModel.create(room);
   }
 
   async update(id: string, room: Partial<Room>): Promise<Room | null> {
@@ -103,29 +101,6 @@ export class RoomService {
       .populate('maleParticipant')
       .populate('femaleParticipant')
       .exec();
-  }
-
-  async updateLiked(
-    id: string,
-    gender: Gender,
-    liked: boolean,
-  ): Promise<Room | null> {
-    const field = gender === 'male' ? 'maleLiked' : 'femaleLiked';
-    const room = await this.roomModel
-      .findByIdAndUpdate(id, { [field]: liked }, { new: true })
-      .exec();
-
-    if (room) {
-      room[field] = liked;
-
-      // 양쪽 모두 liked가 true일 경우 매치 성공
-      if (room.maleLiked && room.femaleLiked) {
-        room.isMatched = true;
-        await room.save();
-      }
-    }
-
-    return room;
   }
 
   private computeOptimalMatching(

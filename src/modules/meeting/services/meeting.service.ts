@@ -9,14 +9,11 @@ import { Meeting, MeetingDocument } from '../schemas/meeting.schema';
 import { CreateMeetingDto } from '../dtos/request/create-meeting.request';
 import { UserService } from 'src/modules/user/services/user.service';
 import { MeetingMapper } from '../mappers/meeting.mapper';
-import { CreateParticipantDto } from 'src/modules/participant/dtos/request/create-participant.request';
 import { saveAndLean } from 'src/common/helper/lean.helper';
-import { MeetingPopulated } from 'src/common/types/populated/meeting-populated.type';
-import { MeetingResponse } from '../dtos/response/meeting.response';
 import { ParticipantService } from 'src/modules/participant/services/participant.service';
 import { CycleService } from 'src/modules/cycle/services/cycle.service';
 import { RoomService } from 'src/modules/room/services/room.service';
-import { ParticipantDocument } from 'src/modules/participant/schemas/participant.schema';
+import { LeanDocument } from 'src/common/types/lean.type';
 
 @Injectable()
 export class MeetingService {
@@ -29,27 +26,11 @@ export class MeetingService {
   ) {}
 
   async findAll(): Promise<Meeting[]> {
-    return this.meetingModel
-      .find()
-      .populate('host')
-      .populate('maleParticipants')
-      .populate('femaleParticipants')
-      .exec();
+    return this.meetingModel.find().populate('host').exec();
   }
 
-  async findOne(id: string): Promise<MeetingResponse> {
-    const meeting = await this.meetingModel
-      .findById(id)
-      .populate({ path: 'maleParticipants', options: { lean: true } })
-      .populate({ path: 'femaleParticipants', options: { lean: true } })
-      .lean<MeetingPopulated>()
-      .exec();
-
-    if (!meeting) {
-      throw new NotFoundException('Meeting not found');
-    }
-
-    return MeetingMapper.toDetailResponse(meeting);
+  async findOne(id: string): Promise<LeanDocument<Meeting> | null> {
+    return await this.meetingModel.findById(id).lean().exec();
   }
 
   async findCurrentCycle(meetingId: string) {
@@ -138,72 +119,6 @@ export class MeetingService {
     return this.meetingModel.findByIdAndDelete(id).exec();
   }
 
-  async addParticipant(
-    meetingId: string,
-    createParticipantDto: CreateParticipantDto,
-  ): Promise<ParticipantDocument> {
-    const targetMeeting = await this.meetingModel.findById(meetingId).exec();
-
-    if (!targetMeeting) {
-      throw new NotFoundException('Meeting not found');
-    }
-
-    if (targetMeeting.status !== 'pending') {
-      throw new BadRequestException('Meeting is not pending');
-    }
-
-    this.validateParticipantLimit(targetMeeting, createParticipantDto);
-
-    const createdParticipant = await this.participantService.create(
-      createParticipantDto,
-      meetingId,
-    );
-
-    const field =
-      createParticipantDto.gender === 'male'
-        ? 'maleParticipants'
-        : 'femaleParticipants';
-
-    targetMeeting[field].push(createdParticipant._id);
-    await targetMeeting.save();
-
-    return createdParticipant;
-  }
-
-  async removeParticipant(
-    meetingId: string,
-    userId: string,
-  ): Promise<Meeting | null> {
-    const targetMeeting = await this.meetingModel.findById(meetingId).exec();
-
-    if (!targetMeeting) {
-      throw new NotFoundException('Meeting not found');
-    }
-
-    if (targetMeeting.status !== 'pending') {
-      throw new BadRequestException('Meeting is not pending');
-    }
-
-    const targetParticipant = await this.participantService.findOne(userId);
-
-    if (!targetParticipant) {
-      throw new NotFoundException('Participant not found');
-    }
-
-    const field =
-      targetParticipant.gender === 'male'
-        ? 'maleParticipants'
-        : 'femaleParticipants';
-
-    return this.meetingModel
-      .findByIdAndUpdate(
-        meetingId,
-        { $pull: { [field]: targetParticipant._id } },
-        { new: true },
-      )
-      .exec();
-  }
-
   async start(id: string): Promise<Meeting | null> {
     const targetMeeting = await this.meetingModel.findById(id).exec();
 
@@ -227,41 +142,59 @@ export class MeetingService {
     const meeting = await this.meetingModel.findById(meetingId);
     if (!meeting) throw new NotFoundException('미팅을 찾을 수 없습니다');
 
-    // 진행 중인 미팅이면 현재 사이클 종료
-    if (meeting.status === 'ongoing') {
-      await this.cycleService.completeCycle(
-        meetingId,
-        meeting.currentCycleOrder,
-      );
-    }
-
-    // 미팅 상태 변경
     meeting.status = 'cancelled';
     return meeting.save();
   }
 
   async advanceToNextCycle(meetingId: string): Promise<MeetingDocument> {
     const meeting = await this.meetingModel.findById(meetingId);
-    if (!meeting) throw new NotFoundException('미팅을 찾을 수 없습니다');
 
+    if (!meeting) throw new NotFoundException('미팅을 찾을 수 없습니다');
     if (meeting.status !== 'ongoing') {
       throw new BadRequestException('진행 중인 미팅이 아닙니다');
     }
 
-    // 현재 사이클 완료 처리
-    await this.cycleService.completeCycle(meetingId, meeting.currentCycleOrder);
+    const totalCycles = Math.max(meeting.maleCount, meeting.femaleCount);
 
     // 다음 사이클 번호 계산
     const nextCycleOrder = meeting.currentCycleOrder + 1;
 
     // 모든 사이클이 완료되었는지 확인
-    if (nextCycleOrder >= meeting.totalCycles) {
+    if (nextCycleOrder >= totalCycles) {
       meeting.status = 'completed';
       return meeting.save();
     }
 
     // 다음 사이클 생성 및 시작
-    await this.cycleService.create(meeting, nextCycleOrder);
+    const createdCycle = await this.cycleService.create(
+      meeting,
+      nextCycleOrder,
+    );
+
+    const participants = await this.participantService.findByMeeting(meetingId);
+    const maleParticipants = participants.filter(
+      (participant) => participant.gender === 'male',
+    );
+    const femaleParticipants = participants.filter(
+      (participant) => participant.gender === 'female',
+    );
+
+    const pairs = this.computeOptimalMatching(
+      maleParticipants.map((participant) => participant._id),
+      femaleParticipants.map((participant) => participant._id),
+      nextCycleOrder,
+      totalCycles,
+    );
+
+    await Promise.all(
+      pairs.map(({ male, female }) =>
+        this.roomService.create({
+          cycle: createdCycle._id,
+          maleParticipant: male._id,
+          femaleParticipant: female._id,
+        }),
+      ),
+    );
 
     // 미팅 정보 업데이트
     meeting.currentCycleOrder = nextCycleOrder;
@@ -288,21 +221,22 @@ export class MeetingService {
       .exec();
   }
 
-  private validateParticipantLimit(
-    meeting: Meeting,
-    createParticipantDto: CreateParticipantDto,
-  ) {
-    const gender = createParticipantDto.gender;
-    const field = gender === 'male' ? 'maleParticipants' : 'femaleParticipants';
-    const limit = gender === 'male' ? meeting.maleCount : meeting.femaleCount;
-    const participants = meeting[field];
+  private computeOptimalMatching(
+    males: Types.ObjectId[],
+    females: Types.ObjectId[],
+    cycleOrder: number,
+    totalCycles: number,
+  ): Array<{ male: Types.ObjectId; female: Types.ObjectId }> {
+    const matches: { male: Types.ObjectId; female: Types.ObjectId }[] = [];
 
-    if (meeting.status !== 'pending') {
-      throw new BadRequestException('Meeting is already started');
+    for (let maleIndex = 0; maleIndex < totalCycles; maleIndex++) {
+      const femaleIndex = (maleIndex + cycleOrder) % totalCycles;
+      matches.push({
+        male: males[maleIndex],
+        female: females[femaleIndex],
+      });
     }
 
-    if (participants.length >= limit) {
-      throw new BadRequestException(`${gender} participant is full`);
-    }
+    return matches;
   }
 }

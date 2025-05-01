@@ -1,11 +1,4 @@
-import {
-  IsString,
-  IsNotEmpty,
-  IsOptional,
-  IsEnum,
-  IsBoolean,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsString, IsNotEmpty } from 'class-validator';
 
 export class CreateRoomDto {
   @IsNotEmpty()
@@ -19,23 +12,4 @@ export class CreateRoomDto {
   @IsNotEmpty()
   @IsString()
   femaleParticipant: string; // Participant ID (ObjectId)
-
-  @IsOptional()
-  @IsEnum(['pending', 'ongoing', 'completed'])
-  status?: string = 'pending';
-
-  @IsOptional()
-  @IsBoolean()
-  @Type(() => Boolean)
-  maleLiked?: boolean | null = null;
-
-  @IsOptional()
-  @IsBoolean()
-  @Type(() => Boolean)
-  femaleLiked?: boolean | null = null;
-
-  @IsOptional()
-  @IsBoolean()
-  @Type(() => Boolean)
-  isMatched?: boolean = false;
 }

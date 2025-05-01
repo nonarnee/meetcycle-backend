@@ -1,3 +1,3 @@
 import { Types } from 'mongoose';
 
-export type LeanSchema<T> = T & { _id: Types.ObjectId };
+export type LeanDocument<T> = T & { _id: Types.ObjectId };

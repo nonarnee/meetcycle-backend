@@ -21,18 +21,6 @@ export class Room {
     required: true,
   })
   femaleParticipant: Types.ObjectId;
-
-  @Prop({ default: 'pending', enum: ['pending', 'ongoing', 'completed'] })
-  status: string;
-
-  @Prop({ type: Boolean, default: null })
-  maleLiked: boolean | null;
-
-  @Prop({ type: Boolean, default: null })
-  femaleLiked: boolean | null;
-
-  @Prop({ default: false })
-  isMatched: boolean;
 }
 
 export const RoomSchema = SchemaFactory.createForClass(Room);

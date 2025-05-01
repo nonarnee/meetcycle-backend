@@ -1,12 +1,4 @@
-import { Type } from 'class-transformer';
-import {
-  IsArray,
-  IsNotEmpty,
-  IsNumber,
-  IsString,
-  ValidateNested,
-} from 'class-validator';
-import { ParticipantPublicResponse } from 'src/modules/participant/dtos/response/participant-public.response';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class MeetingResponse {
   @IsNotEmpty()
@@ -43,25 +35,9 @@ export class MeetingResponse {
 
   @IsNotEmpty()
   @IsNumber()
-  totalCycles: number;
-
-  @IsNotEmpty()
-  @IsNumber()
   currentCycleOrder: number;
 
   @IsNotEmpty()
   @IsString()
   status: string;
-
-  @IsNotEmpty()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ParticipantPublicResponse)
-  maleParticipants: ParticipantPublicResponse[];
-
-  @IsNotEmpty()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ParticipantPublicResponse)
-  femaleParticipants: ParticipantPublicResponse[];
 }

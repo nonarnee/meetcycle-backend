@@ -11,9 +11,6 @@ export class Cycle {
   @Prop({ required: true })
   order: number;
 
-  @Prop({ default: 'pending', enum: ['pending', 'ongoing', 'completed'] })
-  status: string;
-
   @Prop({ default: null })
   endTime: Date;
 }

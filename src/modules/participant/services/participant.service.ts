@@ -7,7 +7,7 @@ import {
 } from '../schemas/participant.schema';
 import { CreateParticipantDto } from '../dtos/request/create-participant.request';
 import { UpdateParticipantDto } from '../dtos/request/update-participant.request';
-import { LeanSchema } from 'src/common/types/lean.type';
+import { LeanDocument } from 'src/common/types/lean.type';
 
 @Injectable()
 export class ParticipantService {
@@ -20,12 +20,16 @@ export class ParticipantService {
     return this.participantModel.find().exec();
   }
 
-  async findOne(id: string): Promise<LeanSchema<Participant> | null> {
+  async findOne(id: string): Promise<LeanDocument<Participant> | null> {
     return this.participantModel.findById(id).lean().exec();
   }
 
   async findByGender(gender: string): Promise<Participant[]> {
     return this.participantModel.find({ gender }).exec();
+  }
+
+  async findByMeeting(meetingId: string): Promise<LeanDocument<Participant>[]> {
+    return this.participantModel.find({ meeting: meetingId }).lean().exec();
   }
 
   async create(

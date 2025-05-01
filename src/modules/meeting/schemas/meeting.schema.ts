@@ -5,23 +5,17 @@ export type MeetingDocument = Meeting & Document<Types.ObjectId>;
 
 @Schema({ timestamps: true })
 export class Meeting {
-  @Prop({ required: true })
-  title: string;
-
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   host: Types.ObjectId;
+
+  @Prop({ required: true })
+  title: string;
 
   @Prop({ required: true })
   maleCount: number;
 
   @Prop({ required: true })
   femaleCount: number;
-
-  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Participant' }] })
-  maleParticipants: Types.ObjectId[];
-
-  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Participant' }] })
-  femaleParticipants: Types.ObjectId[];
 
   @Prop({ required: true })
   location: string;
@@ -37,9 +31,6 @@ export class Meeting {
 
   @Prop({ default: 10 })
   roomDurationMinutes: number;
-
-  @Prop({ default: 0 })
-  totalCycles: number;
 
   @Prop({ default: 0 })
   currentCycleOrder: number;

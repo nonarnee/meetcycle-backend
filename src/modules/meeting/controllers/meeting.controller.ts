@@ -14,7 +14,6 @@ import { MeetingService } from '../services/meeting.service';
 import { Meeting } from '../schemas/meeting.schema';
 import { CreateMeetingDto } from '../dtos/request/create-meeting.request';
 import { CreateMeetingResponse } from '../dtos/response/create-meeting.response';
-import { MeetingResponse } from '../dtos/response/meeting.response';
 import { CreateParticipantDto } from 'src/modules/participant/dtos/request/create-participant.request';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/modules/user/types/user-role.type';
@@ -22,12 +21,15 @@ import { Public } from 'src/common/decorators/public.decorator';
 import { AuthService } from 'src/modules/auth/services/auth.service';
 import { Response } from 'express';
 import { AuthResponse } from 'src/modules/auth/types/auth-response.type';
+import { LeanDocument } from 'src/common/types/lean.type';
+import { ParticipantService } from 'src/modules/participant/services/participant.service';
 
 @Controller('meetings')
 export class MeetingController {
   constructor(
     private readonly meetingService: MeetingService,
     private readonly authService: AuthService,
+    private readonly participantService: ParticipantService,
   ) {}
 
   @Get()
@@ -37,7 +39,7 @@ export class MeetingController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<MeetingResponse> {
+  findOne(@Param('id') id: string): Promise<LeanDocument<Meeting> | null> {
     return this.meetingService.findOne(id);
   }
 
@@ -102,9 +104,9 @@ export class MeetingController {
     @Body() createParticipantDto: CreateParticipantDto,
     @Res({ passthrough: true }) res: Response<AuthResponse>,
   ): Promise<AuthResponse> {
-    const createdParticipant = await this.meetingService.addParticipant(
-      id,
+    const createdParticipant = await this.participantService.create(
       createParticipantDto,
+      id,
     );
 
     const accessToken = await this.authService.signParticipant(
@@ -122,15 +124,6 @@ export class MeetingController {
       nickname: createdParticipant.nickname,
       role: UserRole.PARTICIPANT,
     };
-  }
-
-  @Delete(':id/participants/:userId')
-  @Roles(UserRole.ADMIN, UserRole.HOST)
-  removeParticipant(
-    @Param('id') id: string,
-    @Param('userId') userId: string,
-  ): Promise<Meeting | null> {
-    return this.meetingService.removeParticipant(id, userId);
   }
 
   @Get('host/:hostId')
