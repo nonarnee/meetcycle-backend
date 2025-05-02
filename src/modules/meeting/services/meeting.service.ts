@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -22,9 +24,11 @@ export class MeetingService {
     @InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>,
     private userService: UserService,
     private participantService: ParticipantService,
-    private cycleService: CycleService,
     private roomService: RoomService,
     private evaluationService: EvaluationService,
+
+    @Inject(forwardRef(() => CycleService))
+    private cycleService: CycleService,
   ) {}
 
   async findAll(): Promise<Meeting[]> {

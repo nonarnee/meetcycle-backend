@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Cycle } from '../schemas/cycle.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { CycleDocument } from '../schemas/cycle.schema';
@@ -10,6 +15,7 @@ import { add } from 'date-fns';
 import { ParticipantService } from 'src/modules/participant/services/participant.service';
 import { EvaluationService } from 'src/modules/evaluation/evaluation.service';
 import { LeanDocument } from 'src/common/types/lean.type';
+import { MeetingService } from 'src/modules/meeting/services/meeting.service';
 
 @Injectable()
 export class CycleService {
@@ -18,6 +24,9 @@ export class CycleService {
     private roomService: RoomService,
     private participantService: ParticipantService,
     private evaluationService: EvaluationService,
+
+    @Inject(forwardRef(() => MeetingService))
+    private meetingService: MeetingService,
   ) {}
 
   async findAll(): Promise<Cycle[]> {
@@ -53,6 +62,11 @@ export class CycleService {
     const cycle = await this.findOne(room.cycle._id.toString());
     if (!cycle) throw new NotFoundException('Cycle not found');
 
+    const meeting = await this.meetingService.findOne(
+      cycle.meeting._id.toString(),
+    );
+    if (!meeting) throw new NotFoundException('Meeting not found');
+
     const evaluation = await this.evaluationService.findOneByParticipantAndRoom(
       participantId,
       room._id.toString(),
@@ -70,6 +84,7 @@ export class CycleService {
     const { phone: myPhone, _id: myId, ...me } = participant;
 
     return {
+      status: meeting.status,
       cycleId: cycle._id.toString(),
       roomId: room._id.toString(),
       order: cycle.order,

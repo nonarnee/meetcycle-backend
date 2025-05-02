@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MeetingController } from './controllers/meeting.controller';
 import { Meeting, MeetingSchema } from './schemas/meeting.schema';
@@ -14,7 +14,7 @@ import { EvaluationModule } from 'src/modules/evaluation/evaluation.module';
   imports: [
     MongooseModule.forFeature([{ name: Meeting.name, schema: MeetingSchema }]),
     AuthModule,
-    CycleModule,
+    forwardRef(() => CycleModule),
     UserModule,
     ParticipantModule,
     RoomModule,
