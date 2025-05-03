@@ -26,17 +26,21 @@ export class AuthController {
   @Public()
   async login(
     @Body() loginDto: LoginDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response<AuthResponse>,
   ): Promise<AuthResponse> {
     const loginResponse = await this.authService.validateUser(loginDto);
     if (!loginResponse) {
       throw new UnauthorizedException();
     }
-    res.cookie(
-      'access_token',
-      loginResponse.accessToken,
-      this.authService.defaultCookieOptions,
-    );
+
+    res.cookie('access_token', loginResponse.accessToken, {
+      httpOnly: true,
+      secure:
+        req.secure || (req.headers['x-forwarded-proto'] as string) === 'https',
+      sameSite: 'none',
+      maxAge: 24 * 60 * 60 * 1000, // 1일
+    });
 
     return {
       id: loginResponse.user._id.toString(),

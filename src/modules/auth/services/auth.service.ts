@@ -5,7 +5,6 @@ import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from '../dto';
 import { ParticipantService } from 'src/modules/participant/services/participant.service';
 import { UserRole } from 'src/modules/user/types/user-role.type';
-import { CookieOptions } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -14,13 +13,6 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly participantService: ParticipantService,
   ) {}
-
-  defaultCookieOptions: CookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'none',
-    maxAge: 24 * 60 * 60 * 1000, // 1일
-  };
 
   async validateUser(loginDto: LoginDto) {
     const user = await this.usersService.findByEmail(loginDto.email);

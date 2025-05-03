@@ -8,6 +8,7 @@ import {
   Param,
   Post,
   Put,
+  Req,
   Res,
 } from '@nestjs/common';
 import { MeetingService } from '../services/meeting.service';
@@ -19,7 +20,7 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/modules/user/types/user-role.type';
 import { Public } from 'src/common/decorators/public.decorator';
 import { AuthService } from 'src/modules/auth/services/auth.service';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { AuthResponse } from 'src/modules/auth/types/auth-response.type';
 import { LeanDocument } from 'src/common/types/lean.type';
 import { ParticipantService } from 'src/modules/participant/services/participant.service';
@@ -132,6 +133,7 @@ export class MeetingController {
   async addParticipant(
     @Param('id') id: string,
     @Body() createParticipantDto: CreateParticipantDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response<AuthResponse>,
   ): Promise<AuthResponse> {
     const createdParticipant = await this.participantService.create(
@@ -143,11 +145,13 @@ export class MeetingController {
       createdParticipant._id.toString(),
     );
 
-    res.cookie(
-      'access_token',
-      accessToken,
-      this.authService.defaultCookieOptions,
-    );
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+      secure:
+        req.secure || (req.headers['x-forwarded-proto'] as string) === 'https',
+      sameSite: 'none',
+      maxAge: 24 * 60 * 60 * 1000, // 1일
+    });
 
     return {
       id: createdParticipant._id.toString(),

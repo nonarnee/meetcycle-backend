@@ -4,9 +4,14 @@ import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { JwtAuthGuard } from './modules/auth/guards/jwt.guard';
+import { Express } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Express 인스턴스를 꺼내서 설정
+  const expressApp = app.getHttpAdapter().getInstance() as Express;
+  expressApp.set('trust proxy', 1);
 
   // CORS 설정
   app.enableCors({
@@ -27,7 +32,6 @@ async function bootstrap() {
   app.useGlobalGuards(new JwtAuthGuard(reflector));
   app.useGlobalGuards(new RolesGuard(reflector));
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   app.use(cookieParser());
 
   await app.listen(process.env.PORT ?? 3000);
