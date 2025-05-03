@@ -41,12 +41,10 @@ export class MeetingService {
 
   async findResults(id: string) {
     const participants = await this.participantService.findByMeeting(id);
-    console.log('participants', participants);
 
     const evaluations = await this.evaluationService.findByParticipants(
       participants.map((participant) => participant._id.toString()),
     );
-    console.log('evaluations', evaluations);
 
     const matches = this.evaluationService.getMatchResult(evaluations);
 
