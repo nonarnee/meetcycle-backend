@@ -60,6 +60,12 @@ export class MeetingController {
     return this.participantService.findByMeeting(id);
   }
 
+  @Get(':id/results')
+  @Roles(UserRole.ADMIN, UserRole.HOST)
+  findResults(@Param('id') id: string) {
+    return this.meetingService.findResults(id);
+  }
+
   @Get('participant/:participantId')
   @Public()
   findByParticipantId(@Param('participantId') participantId: string) {

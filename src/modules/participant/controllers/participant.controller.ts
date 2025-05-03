@@ -28,6 +28,11 @@ export class ParticipantController {
     return this.participantService.findOne(id);
   }
 
+  @Get(':id/result')
+  getResult(@Param('id') id: string): Promise<Participant[]> {
+    return this.participantService.getResult(id);
+  }
+
   @Put(':id')
   update(
     @Param('id') id: string,

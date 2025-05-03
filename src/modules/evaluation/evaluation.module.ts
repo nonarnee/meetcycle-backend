@@ -1,15 +1,17 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Evaluation } from './evaluation.schema';
 import { EvaluationSchema } from './evaluation.schema';
 import { EvaluationService } from './evaluation.service';
 import { EvaluationController } from './evaluation.controller';
+import { ParticipantModule } from '../participant/participant.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Evaluation.name, schema: EvaluationSchema },
     ]),
+    forwardRef(() => ParticipantModule),
   ],
   controllers: [EvaluationController],
   providers: [EvaluationService],
