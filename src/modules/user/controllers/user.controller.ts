@@ -14,6 +14,7 @@ import { User } from '../schemas/user.schema';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from '../types/user-role.type';
 import { Public } from 'src/common/decorators/public.decorator';
+import { CreateUserResponse } from '../dtos/response/create-user-response';
 
 @Controller('user')
 export class UserController {
@@ -33,14 +34,13 @@ export class UserController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @Public()
-  async create(
-    @Body() user: Omit<User, 'role'>,
-  ): Promise<Omit<User, 'password' | 'role'>> {
+  async create(@Body() user: Omit<User, 'role'>): Promise<CreateUserResponse> {
     const createdUser = await this.userService.create(user);
 
     return {
+      id: createdUser._id.toString(),
       nickname: createdUser.nickname,
-      email: createdUser.email,
+      role: createdUser.role,
     };
   }
 

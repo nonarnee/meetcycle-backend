@@ -59,7 +59,7 @@ export class AuthController {
   @Get('me')
   @Public()
   async me(@Req() req: Request) {
-    const token = req.cookies?.access_token;
+    const token = req.cookies?.access_token as string;
     if (!token) {
       throw new UnauthorizedException('인증 정보가 없습니다');
     }

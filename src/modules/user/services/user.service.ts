@@ -26,7 +26,7 @@ export class UserService {
       .exec();
   }
 
-  async create(user: Omit<User, 'role'>): Promise<User> {
+  async create(user: Omit<User, 'role'>) {
     // 이메일 중복 확인
     const existingUser = await this.findByEmail(user.email);
     if (existingUser) {
