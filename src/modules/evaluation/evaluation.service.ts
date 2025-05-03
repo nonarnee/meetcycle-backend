@@ -7,12 +7,14 @@ import { Model } from 'mongoose';
 import { LeanDocument } from 'src/common/types/lean.type';
 import { getMutualMatches } from './utils/match';
 import { ParticipantService } from '../participant/services/participant.service';
+import { RoomService } from '../room/services/room.service';
 
 @Injectable()
 export class EvaluationService {
   constructor(
     @InjectModel(Evaluation.name)
     private evaluationModel: Model<EvaluationDocument>,
+    private roomService: RoomService,
 
     @Inject(forwardRef(() => ParticipantService))
     private participantService: ParticipantService,
@@ -26,6 +28,18 @@ export class EvaluationService {
       $or: [{ from: participantId }],
       roomId,
     });
+  }
+
+  async findByMeeting(meetingId: string): Promise<LeanDocument<Evaluation>[]> {
+    const rooms = await this.roomService.findByMeeting(meetingId);
+    console.log('rooms', rooms);
+
+    return this.evaluationModel
+      .find({ roomId: { $in: rooms.map((room) => room._id.toString()) } })
+      .populate('from')
+      .populate('to')
+      .lean()
+      .exec();
   }
 
   async findByParticipant(

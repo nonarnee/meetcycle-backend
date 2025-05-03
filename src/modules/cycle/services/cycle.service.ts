@@ -21,12 +21,18 @@ import { MeetingService } from 'src/modules/meeting/services/meeting.service';
 export class CycleService {
   constructor(
     @InjectModel(Cycle.name) private cycleModel: Model<CycleDocument>,
-    private roomService: RoomService,
-    private participantService: ParticipantService,
-    private evaluationService: EvaluationService,
 
     @Inject(forwardRef(() => MeetingService))
     private meetingService: MeetingService,
+
+    @Inject(forwardRef(() => RoomService))
+    private roomService: RoomService,
+
+    @Inject(forwardRef(() => ParticipantService))
+    private participantService: ParticipantService,
+
+    @Inject(forwardRef(() => EvaluationService))
+    private evaluationService: EvaluationService,
   ) {}
 
   async findAll(): Promise<Cycle[]> {
@@ -41,8 +47,8 @@ export class CycleService {
     return this.cycleModel.findById(id).populate('meeting').lean().exec();
   }
 
-  async findByMeeting(meetingId: string): Promise<Cycle[]> {
-    return this.cycleModel.find({ meeting: meetingId }).exec();
+  async findByMeeting(meetingId: string): Promise<LeanDocument<Cycle>[]> {
+    return this.cycleModel.find({ meeting: meetingId }).lean().exec();
   }
 
   async findByMeetingAndOrder(

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, forwardRef, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Room, RoomDocument } from '../schemas/room.schema';
@@ -6,14 +6,20 @@ import { Cycle, CycleDocument } from 'src/modules/cycle/schemas/cycle.schema';
 import { LeanDocument } from 'src/common/types/lean.type';
 import { Participant } from 'src/modules/participant/schemas/participant.schema';
 import { PopulatedRoom } from '../interfaces/populated-room.interface';
+import { CycleService } from 'src/modules/cycle/services/cycle.service';
+
 @Injectable()
 export class RoomService {
-  constructor(@InjectModel(Room.name) private roomModel: Model<RoomDocument>) {}
+  constructor(
+    @InjectModel(Room.name) private roomModel: Model<RoomDocument>,
+
+    @Inject(forwardRef(() => CycleService))
+    private cycleService: CycleService,
+  ) {}
 
   async findAll(): Promise<Room[]> {
     return this.roomModel
       .find()
-      .populate('meeting')
       .populate('maleParticipant')
       .populate('femaleParticipant')
       .exec();
@@ -22,7 +28,6 @@ export class RoomService {
   async findOne(id: string): Promise<Room | null> {
     return this.roomModel
       .findById(id)
-      .populate('meeting')
       .populate('maleParticipant')
       .populate('femaleParticipant')
       .exec();
@@ -77,10 +82,13 @@ export class RoomService {
     return this.roomModel.findByIdAndDelete(id).exec();
   }
 
-  async findByMeeting(meetingId: string): Promise<Room[]> {
+  async findByMeeting(meetingId: string): Promise<LeanDocument<Room>[]> {
+    const cycles = await this.cycleService.findByMeeting(meetingId);
+
     return this.roomModel
-      .find({ meeting: meetingId })
-      .populate('meeting')
+      .find({
+        cycle: { $in: cycles.map((cycle) => cycle._id) },
+      })
       .populate({
         path: 'maleParticipant',
         select: '-phone',
@@ -89,6 +97,7 @@ export class RoomService {
         path: 'femaleParticipant',
         select: '-phone',
       })
+      .lean()
       .exec();
   }
 
@@ -97,7 +106,6 @@ export class RoomService {
       .find({
         $or: [{ maleParticipant: userId }, { femaleParticipant: userId }],
       })
-      .populate('meeting')
       .populate('maleParticipant')
       .populate('femaleParticipant')
       .exec();

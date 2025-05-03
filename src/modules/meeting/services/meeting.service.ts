@@ -51,6 +51,14 @@ export class MeetingService {
     return matches ?? [];
   }
 
+  async findByHostId(hostId: string) {
+    return await this.meetingModel
+      .findOne({ host: hostId, status: 'ongoing' })
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+  }
+
   async findByParticipantId(participantId: string) {
     const participant = await this.participantService.findOne(participantId);
 
@@ -68,6 +76,10 @@ export class MeetingService {
     }
 
     return meeting;
+  }
+
+  async findEvaluations(meetingId: string) {
+    return await this.evaluationService.findByMeeting(meetingId);
   }
 
   async findCurrentCycle(meetingId: string) {

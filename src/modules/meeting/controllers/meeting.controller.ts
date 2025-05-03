@@ -54,6 +54,12 @@ export class MeetingController {
     return this.meetingService.findCurrentEvaluations(id);
   }
 
+  @Get(':id/evaluations')
+  @Roles(UserRole.ADMIN, UserRole.HOST)
+  findEvaluations(@Param('id') id: string) {
+    return this.meetingService.findEvaluations(id);
+  }
+
   @Get(':id/participants')
   @Roles(UserRole.ADMIN, UserRole.HOST)
   findParticipants(@Param('id') id: string) {
@@ -64,6 +70,12 @@ export class MeetingController {
   @Roles(UserRole.ADMIN, UserRole.HOST)
   findResults(@Param('id') id: string) {
     return this.meetingService.findResults(id);
+  }
+
+  @Get('host/:hostId')
+  @Roles(UserRole.ADMIN, UserRole.HOST)
+  findByHostId(@Param('hostId') hostId: string) {
+    return this.meetingService.findByHostId(hostId);
   }
 
   @Get('participant/:participantId')

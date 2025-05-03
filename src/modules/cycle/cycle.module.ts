@@ -12,9 +12,9 @@ import { MeetingModule } from '../meeting/meeting.module';
   imports: [
     MongooseModule.forFeature([{ name: Cycle.name, schema: CycleSchema }]),
     forwardRef(() => MeetingModule),
-    RoomModule,
-    ParticipantModule,
-    EvaluationModule,
+    forwardRef(() => RoomModule),
+    forwardRef(() => ParticipantModule),
+    forwardRef(() => EvaluationModule),
   ],
   controllers: [CycleController],
   providers: [CycleService],

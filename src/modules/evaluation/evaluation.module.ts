@@ -5,12 +5,14 @@ import { EvaluationSchema } from './evaluation.schema';
 import { EvaluationService } from './evaluation.service';
 import { EvaluationController } from './evaluation.controller';
 import { ParticipantModule } from '../participant/participant.module';
+import { RoomModule } from '../room/room.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Evaluation.name, schema: EvaluationSchema },
     ]),
+    RoomModule,
     forwardRef(() => ParticipantModule),
   ],
   controllers: [EvaluationController],
