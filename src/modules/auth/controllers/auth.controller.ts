@@ -43,6 +43,7 @@ export class AuthController {
     });
 
     return {
+      access_token: loginResponse.accessToken,
       id: loginResponse.user._id.toString(),
       nickname: loginResponse.user.nickname,
       role: loginResponse.user.role,
@@ -63,10 +64,12 @@ export class AuthController {
   @Get('me')
   @Public()
   async me(@Req() req: Request) {
-    const token = req.cookies?.access_token as string;
-    if (!token) {
+    const authorization = req.headers.authorization;
+    if (!authorization) {
       throw new UnauthorizedException('인증 정보가 없습니다');
     }
+
+    const token = authorization.split(' ')[1];
 
     const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
     return {
