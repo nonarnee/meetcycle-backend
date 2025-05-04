@@ -3,14 +3,13 @@ import {
   Post,
   Body,
   UnauthorizedException,
-  Res,
   Get,
   Req,
 } from '@nestjs/common';
 import { AuthResponse } from '../types/auth-response.type';
 import { AuthService } from '../services/auth.service';
 import { LoginDto } from '../dto';
-import { Response, Request } from 'express';
+import { Request } from 'express';
 import { Public } from 'src/common/decorators/public.decorator';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from '../types/jwt-payload.type';
@@ -24,23 +23,11 @@ export class AuthController {
 
   @Post('login')
   @Public()
-  async login(
-    @Body() loginDto: LoginDto,
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response<AuthResponse>,
-  ): Promise<AuthResponse> {
+  async login(@Body() loginDto: LoginDto): Promise<AuthResponse> {
     const loginResponse = await this.authService.validateUser(loginDto);
     if (!loginResponse) {
       throw new UnauthorizedException();
     }
-
-    res.cookie('access_token', loginResponse.accessToken, {
-      httpOnly: true,
-      secure:
-        req.secure || (req.headers['x-forwarded-proto'] as string) === 'https',
-      sameSite: 'none',
-      maxAge: 24 * 60 * 60 * 1000, // 1일
-    });
 
     return {
       access_token: loginResponse.accessToken,
@@ -48,17 +35,6 @@ export class AuthController {
       nickname: loginResponse.user.nickname,
       role: loginResponse.user.role,
     };
-  }
-
-  @Post('logout')
-  logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('access_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
-    });
-
-    return { message: '로그아웃 완료' };
   }
 
   @Get('me')
