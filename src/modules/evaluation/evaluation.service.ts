@@ -8,6 +8,7 @@ import { LeanDocument } from 'src/common/types/lean.type';
 import { getMutualMatches } from './utils/match';
 import { ParticipantService } from '../participant/services/participant.service';
 import { RoomService } from '../room/services/room.service';
+import { Participant } from 'src/modules/participant/schemas/participant.schema';
 
 @Injectable()
 export class EvaluationService {
@@ -81,20 +82,33 @@ export class EvaluationService {
   }
 
   async getMatchResult(evaluations: Evaluation[]) {
-    const matches = getMutualMatches(evaluations);
+    const matches = this._getMutualMatches(evaluations);
+    const allIds = this._flattenAndDedup(matches);
+    const participants = await this._findParticipantsByIds(allIds);
+    const participantMap = this._toParticipantMap(participants);
+    return this._remapMatches(matches, participantMap);
+  }
 
-    // 1. 모든 ID 평탄화 후 중복 제거
-    const allIds = [...new Set(matches.flat())];
+  private _getMutualMatches(evaluations: Evaluation[]) {
+    return getMutualMatches(evaluations);
+  }
 
-    // 2. ID 기준으로 참가자 조회
-    const participants = await this.participantService.findByIds(allIds);
+  private _flattenAndDedup(matches: string[][]) {
+    return [...new Set(matches.flat())];
+  }
 
-    // 3. Map으로 매핑
-    const participantMap = new Map(
-      participants.map((p) => [p._id.toString(), p]),
-    );
+  private async _findParticipantsByIds(ids: string[]) {
+    return this.participantService.findByIds(ids);
+  }
 
-    // 4. 원래 쌍 형태로 재조합
+  private _toParticipantMap(participants: LeanDocument<Participant>[]) {
+    return new Map(participants.map((p) => [p._id.toString(), p]));
+  }
+
+  private _remapMatches(
+    matches: string[][],
+    participantMap: Map<string, LeanDocument<Participant>>,
+  ) {
     return matches.map(([idA, idB]) => [
       participantMap.get(idA)!,
       participantMap.get(idB)!,

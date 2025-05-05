@@ -83,8 +83,15 @@ export class RoomService {
   }
 
   async findByMeeting(meetingId: string): Promise<LeanDocument<Room>[]> {
-    const cycles = await this.cycleService.findByMeeting(meetingId);
+    const cycles = await this._findCyclesByMeeting(meetingId);
+    return this._findRoomsByCycles(cycles);
+  }
 
+  private async _findCyclesByMeeting(meetingId: string) {
+    return this.cycleService.findByMeeting(meetingId);
+  }
+
+  private async _findRoomsByCycles(cycles: LeanDocument<Cycle>[]) {
     return this.roomModel
       .find({
         cycle: { $in: cycles.map((cycle) => cycle._id) },

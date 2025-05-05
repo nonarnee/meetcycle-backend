@@ -16,6 +16,8 @@ import { ParticipantService } from 'src/modules/participant/services/participant
 import { EvaluationService } from 'src/modules/evaluation/evaluation.service';
 import { LeanDocument } from 'src/common/types/lean.type';
 import { MeetingService } from 'src/modules/meeting/services/meeting.service';
+import { Participant } from 'src/modules/participant/schemas/participant.schema';
+import { PopulatedRoom } from 'src/modules/room/interfaces/populated-room.interface';
 
 @Injectable()
 export class CycleService {
@@ -59,36 +61,20 @@ export class CycleService {
   }
 
   async findCurrentByParticipantId(participantId: string) {
-    const participant = await this.participantService.findOne(participantId);
-    if (!participant) throw new NotFoundException('Participant not found');
-
-    const room = await this.roomService.findOneByParticipant(participantId);
-    if (!room) throw new NotFoundException('Room not found');
-
-    const cycle = await this.findOne(room.cycle._id.toString());
-    if (!cycle) throw new NotFoundException('Cycle not found');
-
-    const meeting = await this.meetingService.findOne(
+    const participant = await this._findParticipantOrThrow(participantId);
+    const room = await this._findRoomOrThrow(participantId);
+    const cycle = await this._findCycleOrThrow(room.cycle._id.toString());
+    const meeting = await this._findMeetingOrThrow(
       cycle.meeting._id.toString(),
     );
-    if (!meeting) throw new NotFoundException('Meeting not found');
-
-    const evaluation = await this.evaluationService.findOneByParticipantAndRoom(
+    const evaluation = await this._findEvaluation(
       participantId,
       room._id.toString(),
     );
-
-    const {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      phone: partnerPhone,
-      _id: partnerId,
-      ...partner
-    } = participant.gender === 'male'
-      ? room.femaleParticipant
-      : room.maleParticipant;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { phone: myPhone, _id: myId, ...me } = participant;
-
+    const { partner, partnerId, me, myId } = this._extractPartnerAndMe(
+      participant,
+      room,
+    );
     return {
       status: meeting.status,
       cycleId: cycle._id.toString(),
@@ -105,6 +91,50 @@ export class CycleService {
       },
       result: evaluation ? evaluation.result : null,
     };
+  }
+
+  private async _findParticipantOrThrow(participantId: string) {
+    const participant = await this.participantService.findOne(participantId);
+    if (!participant) throw new NotFoundException('Participant not found');
+    return participant;
+  }
+
+  private async _findRoomOrThrow(participantId: string) {
+    const room = await this.roomService.findOneByParticipant(participantId);
+    if (!room) throw new NotFoundException('Room not found');
+    return room;
+  }
+
+  private async _findCycleOrThrow(cycleId: string) {
+    const cycle = await this.findOne(cycleId);
+    if (!cycle) throw new NotFoundException('Cycle not found');
+    return cycle;
+  }
+
+  private async _findMeetingOrThrow(meetingId: string) {
+    const meeting = await this.meetingService.findOne(meetingId);
+    if (!meeting) throw new NotFoundException('Meeting not found');
+    return meeting;
+  }
+
+  private async _findEvaluation(participantId: string, roomId: string) {
+    return this.evaluationService.findOneByParticipantAndRoom(
+      participantId,
+      roomId,
+    );
+  }
+
+  private _extractPartnerAndMe(
+    participant: LeanDocument<Participant>,
+    room: PopulatedRoom,
+  ) {
+    const isMale = participant.gender === 'male';
+    const partnerParticipant = isMale
+      ? room.femaleParticipant
+      : room.maleParticipant;
+    const { _id: partnerId, ...partner } = partnerParticipant;
+    const { _id: myId, ...me } = participant;
+    return { partner, partnerId, me, myId };
   }
 
   async create(

@@ -14,6 +14,7 @@ import { CreateParticipantDto } from '../dtos/request/create-participant.request
 import { UpdateParticipantDto } from '../dtos/request/update-participant.request';
 import { LeanDocument } from 'src/common/types/lean.type';
 import { EvaluationService } from 'src/modules/evaluation/evaluation.service';
+import { Evaluation } from 'src/modules/evaluation/evaluation.schema';
 
 @Injectable()
 export class ParticipantService {
@@ -49,29 +50,45 @@ export class ParticipantService {
   }
 
   async getResult(id: string) {
-    const participant = await this.findOne(id);
-    if (!participant) throw new NotFoundException('Participant not found');
-
-    const evaluations = await this.evaluationService.findByParticipant(
+    const participant = await this._findParticipantOrThrow(id);
+    const evaluations = await this._findEvaluationsByParticipant(
       participant._id.toString(),
     );
+    const myLikes = this._getMyLikes(evaluations, participant._id.toString());
+    const likesMe = this._getLikesMe(evaluations, participant._id.toString());
+    const matched = this._getMatched(myLikes, likesMe);
+    return this._findParticipantsByIds(matched);
+  }
 
-    const myLikes = evaluations
-      .filter(
-        (evaluation) =>
-          evaluation.from.toString() === participant._id.toString(),
-      )
+  private async _findParticipantOrThrow(id: string) {
+    const participant = await this.findOne(id);
+    if (!participant) throw new NotFoundException('Participant not found');
+    return participant;
+  }
+
+  private async _findEvaluationsByParticipant(participantId: string) {
+    return this.evaluationService.findByParticipant(participantId);
+  }
+
+  private _getMyLikes(evaluations: Evaluation[], participantId: string) {
+    return evaluations
+      .filter((evaluation) => evaluation.from.toString() === participantId)
       .map((evaluation) => evaluation.to.toString());
-    const likesMe = evaluations
-      .filter(
-        (evaluation) => evaluation.to.toString() === participant._id.toString(),
-      )
+  }
+
+  private _getLikesMe(evaluations: Evaluation[], participantId: string) {
+    return evaluations
+      .filter((evaluation) => evaluation.to.toString() === participantId)
       .map((evaluation) => evaluation.from.toString());
+  }
 
-    const matched = myLikes.filter((like) => likesMe.includes(like));
+  private _getMatched(myLikes: string[], likesMe: string[]) {
+    return myLikes.filter((like) => likesMe.includes(like));
+  }
 
+  private _findParticipantsByIds(ids: string[]) {
     return this.participantModel
-      .find({ _id: { $in: matched } })
+      .find({ _id: { $in: ids } })
       .lean()
       .exec();
   }

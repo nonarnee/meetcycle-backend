@@ -27,26 +27,30 @@ export class UserService {
   }
 
   async create(user: Omit<User, 'role'>) {
-    // 이메일 중복 확인
-    const existingUser = await this.findByEmail(user.email);
+    await this._throwIfEmailExists(user.email);
+    const hashed = await this._hashPassword(user.password);
+    return this._createUser({ ...user, password: hashed });
+  }
+
+  private async _throwIfEmailExists(email: string) {
+    const existingUser = await this.findByEmail(email);
     if (existingUser) {
       throw new ConflictException('이미 사용 중인 이메일입니다');
     }
+  }
 
-    // 비밀번호 암호화
+  private async _hashPassword(password: string) {
     const salt = await bcrypt.genSalt(Number(process.env.BCRYPT_SALT_ROUNDS));
-    const hashed = await bcrypt.hash(user.password, salt);
+    return bcrypt.hash(password, salt);
+  }
 
-    // 유저 생성
-    const createdUser = await saveAndLean(
+  private async _createUser(user: Omit<User, 'role'> & { password: string }) {
+    return saveAndLean(
       new this.userModel({
         ...user,
-        password: hashed,
         role: UserRole.PARTICIPANT,
       }),
     );
-
-    return createdUser;
   }
 
   async update(id: string, user: User): Promise<LeanDocument<User> | null> {

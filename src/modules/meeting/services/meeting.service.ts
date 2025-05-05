@@ -10,13 +10,12 @@ import { Model, Types } from 'mongoose';
 import { Meeting, MeetingDocument } from '../schemas/meeting.schema';
 import { CreateMeetingDto } from '../dtos/request/create-meeting.request';
 import { UserService } from 'src/modules/user/services/user.service';
-import { MeetingMapper } from '../mappers/meeting.mapper';
-import { saveAndLean } from 'src/common/helper/lean.helper';
 import { ParticipantService } from 'src/modules/participant/services/participant.service';
 import { CycleService } from 'src/modules/cycle/services/cycle.service';
 import { RoomService } from 'src/modules/room/services/room.service';
 import { LeanDocument } from 'src/common/types/lean.type';
 import { EvaluationService } from 'src/modules/evaluation/evaluation.service';
+import { MeetingMapper } from '../mappers/meeting.mapper';
 
 @Injectable()
 export class MeetingService {
@@ -41,14 +40,10 @@ export class MeetingService {
 
   async findResults(id: string) {
     const participants = await this.participantService.findByMeeting(id);
-
     const evaluations = await this.evaluationService.findByParticipants(
       participants.map((participant) => participant._id.toString()),
     );
-
-    const matches = this.evaluationService.getMatchResult(evaluations);
-
-    return matches ?? [];
+    return (await this._getMatchResult(evaluations)) ?? [];
   }
 
   async findByHostId(hostId: string) {
@@ -134,18 +129,20 @@ export class MeetingService {
     return await this.roomService.findByCycle(currentCycle);
   }
 
-  async create(createMeetingDto: CreateMeetingDto) {
+  async create(
+    createMeetingDto: CreateMeetingDto,
+  ): Promise<
+    import('../dtos/response/create-meeting.response').CreateMeetingResponse
+  > {
     const hostUser = await this.userService.findOne(createMeetingDto.hostId);
-
     if (!hostUser) {
       throw new BadRequestException('Host user not found');
     }
-
-    const meetingSchema = MeetingMapper.toSchema(createMeetingDto);
-    const createdMeeting = await saveAndLean<MeetingDocument>(
-      new this.meetingModel(meetingSchema),
-    );
-
+    const meetingSchema = {
+      ...createMeetingDto,
+      // 필요시 추가 가공
+    };
+    const createdMeeting = await this.meetingModel.create(meetingSchema);
     return MeetingMapper.toCreateResponse(createdMeeting);
   }
 
@@ -161,19 +158,15 @@ export class MeetingService {
 
   async start(id: string): Promise<Meeting | null> {
     const targetMeeting = await this.meetingModel.findById(id).exec();
-
     if (!targetMeeting) {
       throw new NotFoundException('Meeting not found');
     }
     if (targetMeeting.status !== 'pending') {
       throw new BadRequestException('Meeting is not pending');
     }
-
     targetMeeting.status = 'ongoing';
     await targetMeeting.save();
-
     await this.cycleService.create(targetMeeting, 0);
-
     return await this.advanceToNextCycle(id);
   }
 
@@ -187,66 +180,32 @@ export class MeetingService {
 
   async advanceToNextCycle(meetingId: string): Promise<MeetingDocument> {
     const meeting = await this.meetingModel.findById(meetingId);
-
     if (!meeting) throw new NotFoundException('미팅을 찾을 수 없습니다');
     if (meeting.status !== 'ongoing') {
       throw new BadRequestException('진행 중인 미팅이 아닙니다');
     }
-
     const totalCycles = Math.max(meeting.maleCount, meeting.femaleCount);
-
-    // 다음 사이클 번호 계산
     const nextCycleOrder = meeting.currentCycleOrder + 1;
-
-    // 마지막 사이클인지 확인
     if (nextCycleOrder > totalCycles) {
       meeting.status = 'completed';
       return meeting.save();
     }
-
     const participants = await this.participantService.findByMeeting(meetingId);
-    const maleParticipants = participants.filter(
-      (participant) => participant.gender === 'male',
-    );
+    const maleParticipants = participants.filter((p) => p.gender === 'male');
     const femaleParticipants = participants.filter(
-      (participant) => participant.gender === 'female',
+      (p) => p.gender === 'female',
     );
-
-    const pairs = this.computeOptimalMatching(
-      maleParticipants.map((participant) => participant._id),
-      femaleParticipants.map((participant) => participant._id),
+    const pairs = this._computeOptimalMatching(
+      maleParticipants.map((p) => p._id),
+      femaleParticipants.map((p) => p._id),
       nextCycleOrder,
       totalCycles,
     );
-
-    // 다음 사이클 생성
     const createdCycle = await this.cycleService.create(
       meeting,
       nextCycleOrder,
     );
-
-    await Promise.all(
-      pairs.map(async ({ male, female }) => {
-        const createdRoom = await this.roomService.create({
-          cycle: createdCycle._id,
-          maleParticipant: male._id,
-          femaleParticipant: female._id,
-        });
-
-        await Promise.all([
-          this.participantService.update(male._id.toString(), {
-            room: createdRoom._id,
-          }),
-          this.participantService.update(female._id.toString(), {
-            room: createdRoom._id,
-          }),
-        ]);
-
-        return;
-      }),
-    );
-
-    // 미팅 정보 업데이트
+    await this._createRoomsAndUpdateParticipants(pairs, createdCycle._id);
     meeting.currentCycleOrder = nextCycleOrder;
     return meeting.save();
   }
@@ -271,14 +230,13 @@ export class MeetingService {
       .exec();
   }
 
-  private computeOptimalMatching(
+  private _computeOptimalMatching(
     males: Types.ObjectId[],
     females: Types.ObjectId[],
     cycleOrder: number,
     totalCycles: number,
   ): Array<{ male: Types.ObjectId; female: Types.ObjectId }> {
     const matches: { male: Types.ObjectId; female: Types.ObjectId }[] = [];
-
     for (let maleIndex = 0; maleIndex < totalCycles; maleIndex++) {
       const femaleIndex = (maleIndex + cycleOrder) % totalCycles;
       matches.push({
@@ -286,7 +244,34 @@ export class MeetingService {
         female: females[femaleIndex],
       });
     }
-
     return matches;
+  }
+
+  private async _createRoomsAndUpdateParticipants(
+    pairs: Array<{ male: Types.ObjectId; female: Types.ObjectId }>,
+    cycleId: Types.ObjectId,
+  ) {
+    await Promise.all(
+      pairs.map(async ({ male, female }) => {
+        const createdRoom = await this.roomService.create({
+          cycle: cycleId,
+          maleParticipant: male,
+          femaleParticipant: female,
+        });
+        await Promise.all([
+          this.participantService.update(male.toString(), {
+            room: createdRoom._id,
+          }),
+          this.participantService.update(female.toString(), {
+            room: createdRoom._id,
+          }),
+        ]);
+      }),
+    );
+  }
+
+  private async _getMatchResult(evaluations: any[]) {
+    if (!this.evaluationService.getMatchResult) return [];
+    return this.evaluationService.getMatchResult(evaluations);
   }
 }
