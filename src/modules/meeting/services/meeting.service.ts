@@ -138,10 +138,7 @@ export class MeetingService {
     if (!hostUser) {
       throw new BadRequestException('Host user not found');
     }
-    const meetingSchema = {
-      ...createMeetingDto,
-      // 필요시 추가 가공
-    };
+    const meetingSchema = MeetingMapper.toSchema(createMeetingDto);
     const createdMeeting = await this.meetingModel.create(meetingSchema);
     return MeetingMapper.toCreateResponse(createdMeeting);
   }
