@@ -16,6 +16,7 @@ import { RoomService } from 'src/modules/room/services/room.service';
 import { LeanDocument } from 'src/common/types/lean.type';
 import { EvaluationService } from 'src/modules/evaluation/evaluation.service';
 import { MeetingMapper } from '../mappers/meeting.mapper';
+import { Evaluation } from 'src/modules/evaluation/evaluation.schema';
 
 @Injectable()
 export class MeetingService {
@@ -267,7 +268,7 @@ export class MeetingService {
     );
   }
 
-  private async _getMatchResult(evaluations: any[]) {
+  private async _getMatchResult(evaluations: LeanDocument<Evaluation>[]) {
     if (!this.evaluationService.getMatchResult) return [];
     return this.evaluationService.getMatchResult(evaluations);
   }

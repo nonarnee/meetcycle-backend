@@ -1,7 +1,8 @@
+import { LeanDocument } from 'src/common/types/lean.type';
 import { Evaluation } from '../evaluation.schema';
 
 export function getMutualMatches(
-  evaluations: Evaluation[],
+  evaluations: LeanDocument<Evaluation>[],
 ): [string, string][] {
   const trueEvals = evaluations.filter((e) => e.result);
 

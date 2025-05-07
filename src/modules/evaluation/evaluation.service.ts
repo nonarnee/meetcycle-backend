@@ -81,7 +81,7 @@ export class EvaluationService {
     return await new this.evaluationModel(evaluation).save();
   }
 
-  async getMatchResult(evaluations: Evaluation[]) {
+  async getMatchResult(evaluations: LeanDocument<Evaluation>[]) {
     const matches = this._getMutualMatches(evaluations);
     const allIds = this._flattenAndDedup(matches);
     const participants = await this._findParticipantsByIds(allIds);
@@ -89,7 +89,7 @@ export class EvaluationService {
     return this._remapMatches(matches, participantMap);
   }
 
-  private _getMutualMatches(evaluations: Evaluation[]) {
+  private _getMutualMatches(evaluations: LeanDocument<Evaluation>[]) {
     return getMutualMatches(evaluations);
   }
 
